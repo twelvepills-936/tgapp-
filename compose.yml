@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: facebase-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: facebase
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./internal/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - facebase-network
+
+  service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: facebase-service
+    environment:
+      # Application ports (согласно CSG)
+      APP_HTTP_PORT: 8090
+      APP_GRPC_PORT: 8091
+      
+      # PostgreSQL configuration
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: postgres
+      PG_PASSWORD: postgres
+      PG_DBNAME: facebase
+      PG_SSLMODE: disable
+      PG_POOL_MAX_CONNS: 10
+      PG_POOL_MIN_CONNS: 1
+      
+      # Application configuration
+      APP_ENVIRONMENT: dev
+      APP_LOG_LEVEL: debug
+    ports:
+      - "8090:8090"  # HTTP API
+      - "8091:8091"  # gRPC API
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - facebase-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  facebase-network:
+    driver: bridge
+

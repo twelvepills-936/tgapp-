@@ -1,0 +1,201 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "GO Template",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "Users"
+    },
+    {
+      "name": "Facebase"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/register": {
+      "post": {
+        "summary": "RegisterByTelegram",
+        "description": "Register user by Telegram WebApp init data",
+        "operationId": "Facebase_RegisterByTelegram",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gotemplateRegisterByTelegramResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gotemplateRegisterByTelegramRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Facebase"
+        ]
+      }
+    },
+    "/v1/user": {
+      "get": {
+        "summary": "GetUser",
+        "description": "Метод для получения пользователя",
+        "operationId": "Users_GetUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gotemplateGetUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "description": "The UserId field description",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/v1/users/telegram/{telegramId}": {
+      "get": {
+        "summary": "GetUserByTelegramId",
+        "description": "Get user profile by telegram id",
+        "operationId": "Facebase_GetUserByTelegramId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gotemplateGetUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "telegramId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Facebase"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "gotemplateGetUserResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/gotemplateUser"
+        }
+      }
+    },
+    "gotemplateRegisterByTelegramRequest": {
+      "type": "object",
+      "properties": {
+        "initDataRaw": {
+          "type": "string"
+        },
+        "startParam": {
+          "type": "string",
+          "title": "referrer telegram_id"
+        }
+      },
+      "title": "Facebase messages",
+      "required": [
+        "initDataRaw"
+      ]
+    },
+    "gotemplateRegisterByTelegramResponse": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "gotemplateUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "surname": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

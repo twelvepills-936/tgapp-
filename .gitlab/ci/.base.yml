@@ -1,0 +1,47 @@
+.task-build-needs:
+  needs:
+    - job: test
+      artifacts: false
+    - job: linter
+      artifacts: false
+
+.ddojo-report:
+  script:
+    - |
+      curl -sSf -X POST "${DDOJO_HOST}/api/v2/import-scan/" \
+        -H "accept: application/json" \
+        -H "Content-Type: multipart/form-data" \
+        -H "Authorization: Token ${DDOJO_TOKEN}" \
+        -F "active=true" \
+        -F "verified=true" \
+        -F "scan_type=${SCAN_TYPE}" \
+        -F "engagement_name=${ENGAGEMENT_NAME}" \
+        -F "product_name=${CI_PROJECT_NAME}" \
+        -F "product_type_name=${PRODUCT_TYPE_NAME}" \
+        -F "test_title=${CI_JOB_NAME}-${CI_COMMIT_SHORT_SHA}" \
+        -F "auto_create_context=true" \
+        -F "deduplication_on_engagement=true" \
+        -F "close_old_findings=true" \
+        -F "file=@${REPORT}"
+
+# временно, отключил запуск автотестов автоматически;
+# в релиз так не катить!
+.task-rules:
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^sync-\d+.*$/i
+      when: never
+    - if: $CI_COMMIT_BRANCH == "staging" && $CI_JOB_NAME == "task-send-details"
+      when: never
+    - if: ($CI_COMMIT_BRANCH =~ /^[a-z]+-\d+.*$/i || $CI_COMMIT_BRANCH == "staging") && $CI_JOB_NAME == "autotests-run"
+      when: manual
+    - if: $CI_COMMIT_BRANCH =~ /^[a-z]+-\d+.*$/i || $CI_COMMIT_BRANCH == "staging"
+
+.autotests-setup:
+  variables:
+    AUTO_TESTS_POSTGRES_PORT: "32714"
+    AUTO_TESTS_ADMINER: "${TASK_DOMAIN_PREFIX}-adminer.${ENVIRONMENT_HOST}"
+    AUTO_TESTS_INTERNAL_HOST: "autotests-internal.ecom-task.skiftrade.kz"
+    AUTO_TESTS_EXTERNAL_HOST: "autotests-external.ecom-task.skiftrade.kz"
+  before_script:
+    - !reference [.common-creds, script]
+    - export AUTO_TESTS_DB_NAME="${TASK_DOMAIN_PREFIX}_${TASK_ENV}_autotests"

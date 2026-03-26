@@ -1,0 +1,10 @@
+.idea
+*.env
+.tmp
+*.crt
+*.out
+.vscode/settings.json
+vendor
+
+# Protobuf compiler
+protoc.exe

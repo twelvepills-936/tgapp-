@@ -1,0 +1,159 @@
+global:
+  techStack: 
+    go: true
+
+envs:
+  enabled: true
+  env:
+    BAAS_TOKEN: ${BAAS_TOKEN}
+    PG_NAME: ${TASK}_autotests
+    POSTGRES_USER: boxberry
+    FLYWAY_URL: 'jdbc:postgresql://$(PG_HOST):$(PG_PORT)/${TASK}_autotests?sslmode=disable'
+    FLYWAY_LOCATIONS: filesystem:/migrations
+    FLYWAY_USER: boxberry
+    FLYWAY_PASSWORD: ${TASK_DB_PASSWORD}
+    FLYWAY_SCHEMAS: public
+    FLYWAY_VALIDATE_MIGRATION_NAMING: 'true'
+    FLYWAY_OUT_OF_ORDER: 'true'
+    FLYWAY_CONNECT_RETRIES: '30'
+    FLYWAY_CONNECT_RETRIES_INTERVAL: '20'
+    RABBITMQ_VHOST: ${TASK}_autotests
+
+app:
+  containers:
+    app:
+      enabled: true
+      runCommand:
+        enabled: true
+        command: "/go/bin/service"
+      port:
+        enabled: true
+        name: http
+        containerPort: 8080
+        protocol: TCP
+      envFromSecret:
+        enabled: true
+        name: env-from
+      envs:
+        enabled: true
+        env:
+          PG_NAME: ${TASK}_autotests
+
+services:
+  enabled: true
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+
+preInstallJobs:
+  enabled: true
+  separate_jobs_on_pod:
+    enabled: true
+  volumes:
+    enabled: true
+    volumeMounts:
+      - name: migrations
+        type: configmap
+        configMap: service-app-outside-configmap
+  containers:
+    # - name: dump 
+    #   command: ./pgrestore.sh
+    #   image:
+    #     enabled: true
+    #     repository: registry-gitlab.boxberry.ru/image/postgresql
+    #     tag: v1.4.0
+    #   weight: 0
+    #   envFromSecret:
+    #     enabled: true
+    #     name: env-from
+    - name: migrations
+      weight: 1
+      image: 
+        enabled: true
+        repository: registry-gitlab16.skiftrade.kz/image/flyway
+        tag: v8.5.13
+      command: flyway migrate;
+      envs:
+        enabled: true
+      envFromSecret:
+        enabled: true
+        name: env-from
+      volumes:
+        enabled: true
+        volumeMounts:
+          migrations:
+            path: /migrations
+
+preUpgradeJobs:
+  enabled: true
+  separate_jobs_on_pod:
+    enabled: true
+  volumes:
+    enabled: true
+    volumeMounts:
+      - name: migrations
+        type: configmap
+        configMap: service-app-outside-configmap
+  containers:
+    - name: migrations
+      weight: 1
+      image: 
+        enabled: true
+        repository: registry-gitlab16.skiftrade.kz/image/flyway
+        tag: v8.5.13
+      command: flyway migrate;
+      envs:
+        enabled: true
+      envFromSecret:
+        enabled: true
+        name: env-from
+      volumes:
+        enabled: true
+        volumeMounts:
+          migrations:
+            path: /migrations
+
+psql:
+  enabled: true
+  prejobs:
+    image: registry-gitlab16.skiftrade.kz/lib/images/postgres:13.16-ml
+    command_create: while true; do if (echo >/dev/tcp/common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local/5432) >/dev/null 2>&1; then break; fi; done && sleep 10 && if PGPASSWORD=${TASK_DB_PASSWORD} psql -h common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local -U boxberry -tc 'SELECT 1' -d ${TASK}_autotests &>dev/null; then echo 'database project_project_predprod already exist'; else PGPASSWORD=${TASK_DB_PASSWORD} createdb -h common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local -U boxberry ${TASK}_autotests; fi
+    command_delete: if PGPASSWORD=${TASK_DB_PASSWORD} psql -h common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local -U boxberry -tc 'SELECT 1' -d ${TASK}_autotests &>dev/null; then PGPASSWORD=${TASK_DB_PASSWORD} dropdb -h common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local -U boxberry ${TASK}_autotests; fi
+
+ingress:
+  enabled: true
+  traefik:
+    enabled: true
+    routes:
+      http:
+        scheme: http
+        port: 8080
+        middlewares:
+          - default-common-acl-middle-task@kubernetescrd
+  nginx:
+    enabled: false
+
+configFiles:
+  enabled: true
+  outside:
+    split: false
+    enabled: true
+
+secrets:
+  gitlab:
+    ml:
+      enabled: true
+  tls:
+    middle:
+      enabled: true
+      crt: ${SERVICE_HTTPS_ECOM_TASK_SMALL_RU_CRT}
+      key: ${SERVICE_HTTPS_ECOM_TASK_SMALL_RU_CRT}
+  envFrom:
+    enabled: true
+    name: env-from
+    data: ${ENV_ENCODE}
+
+nodeSelector:
+  env: middle-task

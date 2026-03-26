@@ -1,0 +1,55 @@
+psql:
+  enabled: true
+  password: ${TASK_DB_PASSWORD}
+  user: ecom
+  image:
+    repository: cr.yandex/crpe/ecom/common/postgres
+    tag: 13.16-ml
+  # Переопрелеляем для фикса ошибки в ЯО, папка lost+found
+  volumes:
+    enabled: true
+    containers:
+      volumeMounts:
+        psql-data:
+          subPath:
+            enabled: true
+            path: postgres
+
+adminer:
+  enabled: true
+  ingress:
+    host: ${TASK_DOMAIN_PREFIX}-adminer.${ENVIRONMENT_HOST}
+    traefik:
+      enabled: true
+      routes:
+        http:
+          middlewares: 
+            - default-common-acl-middle-task@kubernetescrd
+    nginx:
+      enabled: false
+
+service:
+  nodeport:
+    enabled: true
+  nodeports:
+    - name: psql-template-go
+      port: 5432
+      targetPort: 5432
+      nodePort: 32714
+      protocol: TCP
+      selector: psql
+
+pvc:
+  enabled: true
+  storageClassName: yc-network-ssd
+  accessMode: ReadWriteOnce
+  path: "template-go"
+
+secrets:
+  tls:
+    middle:
+      enabled: true
+      name: ecom-task-tls
+
+nodeSelector:
+  env: ecom-common-task

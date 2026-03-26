@@ -1,0 +1,7 @@
+.gitlab/
+test/
+testdata/
+deployment/
+scripts/
+semgrep-go/
+vendor/
