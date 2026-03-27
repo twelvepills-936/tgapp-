@@ -316,7 +316,6 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 ## 👥 Авторы
 
-- Original template: [gitlab16.skiftrade.kz/templates/go](https://gitlab16.skiftrade.kz/templates/go)
 - Improvements & Facebase API: [@twelvepills-936](https://github.com/twelvepills-936)
 
 ---
