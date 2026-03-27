@@ -316,7 +316,7 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 ## 👥 Авторы
 
-- Improvements & Facebase API: [@twelvepills-936](https://github.com/twelvepills-936)
+- Improvements: [@twelvepills-936](https://github.com/twelvepills-936)
 
 ---
 
