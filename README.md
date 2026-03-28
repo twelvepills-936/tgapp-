@@ -165,7 +165,7 @@ make proto.gen
 ### Добавление нового endpoint
 
 1. Описать метод в `api/service.proto`
-2. Сгенерировать код: `make gen.proto`
+2. Сгенерировать код: `make proto.gen`
 3. Реализовать в слоях:
    - Repository: `internal/repository/`
    - UseCase: `internal/usecase/`
@@ -312,7 +312,8 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 ## 👥 Авторы
 
-- Improvements: [@twelvepills-936](https://github.com/twelvepills-936)
+- The Authors and Improvements: [@twelvepills-936](https://github.com/twelvepills-936)
+- The Authors and Improvements: [@chopic82region](https://github.com/chopic82region)
 
 ---
 

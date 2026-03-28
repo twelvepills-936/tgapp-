@@ -6,8 +6,8 @@ import (
 	"log/slog"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/twelvepills-936/tgapp-/pkg/logger"
 	"github.com/twelvepills-936/tgapp-/internal/repository/models"
+	"github.com/twelvepills-936/tgapp-/pkg/logger"
 )
 
 func (r *Repository) ReadUser(ctx context.Context, id int64, dbTx pgx.Tx) (user models.User, err error) {

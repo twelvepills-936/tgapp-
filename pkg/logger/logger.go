@@ -4,7 +4,6 @@ import (
 	"log/slog"
 )
 
-// ErrorAttr creates a slog attribute for an error.
 // ErrorAttr wraps an error for slog attributes.
 func ErrorAttr(err error) slog.Attr {
 	if err == nil {
@@ -13,7 +12,6 @@ func ErrorAttr(err error) slog.Attr {
 	return slog.Any("error", err)
 }
 
-// InputAttr creates a slog attribute for input values.
 // InputAttr builds a string attribute for slog.
 func InputAttr(key string, value any) slog.Attr {
 	return slog.Any(key, value)

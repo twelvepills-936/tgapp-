@@ -30,7 +30,6 @@ type App struct {
 	httpPort   int
 }
 
-// LoadConfigFromEnv loads configuration from environment variables
 // LoadConfigFromEnv loads gRPC/HTTP ports from the environment.
 func LoadConfigFromEnv() Config {
 	return Config{
@@ -48,7 +47,6 @@ func getenvInt(key string, def int) int {
 	return def
 }
 
-// New creates a new application instance
 // New constructs the app (gRPC server, gateway mux, in-process gRPC client).
 func New(ctx context.Context, cfg Config) (*App, error) {
 	// Create gRPC server
