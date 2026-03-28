@@ -1,0 +1,186 @@
+global:
+  techStack: 
+    go: true
+
+envs:
+  enabled: true
+  env:
+    DB_PASSWORD: ${TASK_DB_PASSWORD}
+    DB_HOST: common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local
+    DB: ${TASK}
+    GITLAB_USER: ${GITLAB_USER_LOGIN}
+    FLYWAY_URL: 'jdbc:postgresql://$(DB_HOST):$(PG_PORT)/$(DB)?sslmode=disable'
+    FLYWAY_LOCATIONS: filesystem:/migrations
+    FLYWAY_USER: boxberry
+    FLYWAY_PASSWORD: ${TASK_DB_PASSWORD}
+    FLYWAY_SCHEMAS: public
+    FLYWAY_VALIDATE_MIGRATION_NAMING: 'true'
+    FLYWAY_OUT_OF_ORDER: 'true'
+    FLYWAY_CONNECT_RETRIES: '30'
+    FLYWAY_CONNECT_RETRIES_INTERVAL: '20'
+
+psql:
+  enabled: true
+  prejobs:
+    image: registry-gitlab16.skiftrade.kz/lib/images/postgres:13.16-ml
+    env:
+      POSTGRES_HOST: common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local
+      POSTGRES_USER: small
+      POSTGRES_PASSWORD: ${TASK_DB_PASSWORD}
+      TASK: ${TASK}
+    command_create: while true; do if (echo >/dev/tcp/common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local/5432) >/dev/null 2>&1; then break; fi; done && sleep 10 && if PGPASSWORD=${TASK_DB_PASSWORD} psql -h common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local -U boxberry -tc 'SELECT 1' -d $TASK &>dev/null; then echo 'database project_project_predprod already exist'; else PGPASSWORD=${TASK_DB_PASSWORD} createdb -h common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local -U boxberry $TASK; fi
+    command_delete: if PGPASSWORD=${TASK_DB_PASSWORD} psql -h common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local -U boxberry -tc 'SELECT 1' -d $TASK &>dev/null; then PGPASSWORD=${TASK_DB_PASSWORD} dropdb -h common-tasks-psql.${TASK_DOMAIN_PREFIX}-common.svc.cluster.local -U boxberry $TASK; fi
+
+app:
+  containers:
+    app:
+      enabled: true
+      runCommand:
+        enabled: true
+        command: "/go/bin/service"
+      port:
+        enabled: true
+        name: http
+        containerPort: 8080
+        protocol: TCP
+      envFromSecret:
+        enabled: true
+        name: env-from
+      probe:
+        enabled: true
+        probes:
+          startupProbe:
+            httpGet:
+              path: /_hc
+              port: 8080
+            failureThreshold: 20
+            periodSeconds: 3
+            timeoutSeconds: 4
+          readinessProbe:
+            httpGet:
+              path: /_hc
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 4
+          livenessProbe:
+            httpGet:
+              path: /_hc
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 4
+
+jobs:
+  enabled: false
+
+services:
+  enabled: true
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+
+ingress:
+  enabled: true
+  nginx:
+    enabled: false
+  traefik:
+    enabled: true
+    routes:
+      http:
+        enabled: true
+        scheme: http
+        port: 8080
+        middlewares:
+          - default-common-acl-middle-task@kubernetescrd
+      grpc: 
+        enabled: true
+        scheme: h2c
+        port: 8080
+        middlewares:
+          - default-common-acl-middle-task@kubernetescrd
+        match: '&& Headers(`content-type`, `application/grpc`)'
+
+secrets:
+  gitlab:
+    ml:
+      enabled: true
+  tls:
+    middle:
+      enabled: true
+      crt: ${SERVICE_HTTPS_ECOM_TASK_SMALL_RU_CRT}
+      key: ${SERVICE_HTTPS_ECOM_TASK_SMALL_RU_KEY}
+  envFrom:
+    enabled: true
+    name: env-from
+    data: ${ENV_ENCODE}
+
+preInstallJobs:
+  enabled: true
+  separate_jobs_on_pod:
+    enabled: true
+  volumes:
+    enabled: true
+    volumeMounts:
+      - name: migrations
+        type: configmap
+        configMap: service-app-outside-configmap
+  containers:
+    - name: migrations
+      weight: 1
+      image: 
+        enabled: true
+        repository: registry-gitlab16.skiftrade.kz/image/flyway
+        tag: v8.5.13
+      command: flyway migrate;
+      envs:
+        enabled: true
+      envFromSecret:
+        enabled: true
+        name: env-from
+      volumes:
+        enabled: true
+        volumeMounts:
+          migrations:
+            path: /migrations
+
+preUpgradeJobs:
+  enabled: true
+  separate_jobs_on_pod:
+    enabled: true
+  volumes:
+    enabled: true
+    volumeMounts:
+      - name: migrations
+        type: configmap
+        configMap: service-app-outside-configmap
+  containers:
+    - name: migrations
+      weight: 1
+      image: 
+        enabled: true
+        repository: registry-gitlab16.skiftrade.kz/image/flyway
+        tag: v8.5.13
+      command: flyway migrate;
+      envs:
+        enabled: true
+      envFromSecret:
+        enabled: true
+        name: env-from
+      volumes:
+        enabled: true
+        volumeMounts:
+          migrations:
+            path: /migrations
+
+
+configFiles:
+  enabled: true
+  outside:
+    split: false
+    enabled: true
+
+nodeSelector:
+  env: ecom-task

@@ -1,0 +1,14 @@
+.idea
+*.env
+.tmp
+*.crt
+*.out
+.vscode/settings.json
+vendor
+
+# Protobuf compiler
+protoc.exe
+
+# Клоны для proto.gen (скачиваются скриптом scripts/proto-gen.sh)
+third_party/googleapis/
+third_party/grpc-gateway/

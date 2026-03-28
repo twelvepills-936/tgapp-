@@ -1,0 +1,13 @@
+version: v2
+deps:
+  - buf.build/googleapis/googleapis
+  - buf.build/grpc-ecosystem/grpc-gateway
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - DEFAULT
+modules:
+  - path: api
+    name: github.com/twelvepills-936/tgapp-

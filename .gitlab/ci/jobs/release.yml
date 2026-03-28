@@ -1,0 +1,13 @@
+release-deploy-k8s:
+  variables:
+    K8S_NAMESPACE: ecom-prod-template-go
+    ENVIRONMENT_HOST: ecom-prod-template-go.skiftrade.kz
+
+pre-notify:
+  variables:
+    DELAY: 15
+    ENVIRONMENT_HOST: ecom-prod-template-go.skiftrade.kz
+
+notify-result:
+  variables:
+    ENVIRONMENT_HOST: ecom-prod-template-go.skiftrade.kz

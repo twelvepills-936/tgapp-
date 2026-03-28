@@ -1,0 +1,4 @@
+rc-deploy-k8s:
+  stage: deploy
+  variables:
+    HELM_VALUES: .gitlab/predprod/app_configuration.yaml

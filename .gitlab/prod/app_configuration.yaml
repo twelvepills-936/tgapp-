@@ -1,0 +1,202 @@
+global:
+  techStack: 
+    go: true
+
+envs:
+  enabled: true
+  env:
+    FLYWAY_URL: 'jdbc:postgresql://$(PG_HOST):$(PG_PORT)/$(PG_NAME)?sslmode=verify-full&sslrootcert=/yandex_crt/yandex.crt'
+    FLYWAY_LOCATIONS: filesystem:/migrations
+    FLYWAY_USER: $(PG_USER)
+    FLYWAY_PASSWORD: $(PG_PASSWORD)
+    FLYWAY_SCHEMAS: public
+    FLYWAY_VALIDATE_MIGRATION_NAMING: 'true'
+    FLYWAY_OUT_OF_ORDER: 'true'
+    FLYWAY_CONNECT_RETRIES: '5'
+    FLYWAY_CONNECT_RETRIES_INTERVAL: '10'
+
+app:
+  volumes:
+    enabled: true
+    volumeMounts:
+     - name: yandex-crt-volume
+       type: secret
+       secret: secret-yandex-crt
+  replicaCount: 3
+  containers:
+    app:
+      enabled: true
+      runCommand:
+        enabled: true
+        command: "/go/bin/service"
+      port:
+        enabled: true
+        name: http
+        containerPort: 8080
+        protocol: TCP
+      envFromSecret:
+        enabled: true
+        name: env-from
+      volumes:
+        enabled: true
+        volumeMounts:
+          yandex-crt-volume:
+            path: /yandex_crt/yandex.crt
+            subPath:
+              enabled: true
+              path: yandex.crt
+      probe:
+        enabled: true
+        probes:
+          startupProbe:
+            httpGet:
+              path: /_hc
+              port: 8080
+            failureThreshold: 20
+            periodSeconds: 3
+            timeoutSeconds: 4
+          readinessProbe:
+            httpGet:
+              path: /_hc
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 4
+          livenessProbe:
+            httpGet:
+              path: /_hc
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 4
+
+services:
+  enabled: true
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+
+ingress:
+  enabled: true
+  traefik:
+    enabled: true
+    routes:
+      http:
+        enabled: true
+        scheme: http
+        port: 8080
+        middlewares:
+          - default-common-acl-middle-prod@kubernetescrd
+      grpc:
+        enabled: true
+        scheme: h2c
+        port: 8081
+        middlewares:
+          - default-common-acl-middle-prod@kubernetescrd
+        match: '&& Headers(`content-type`, `application/grpc`)'
+  nginx:
+    enabled: false
+
+secrets:
+  gitlab:
+    ml:
+      enabled: true
+  tls:
+    skiftrade:
+      enabled: true
+  envFrom:
+    enabled: true
+    name: env-from
+    data: ${ENV_ENCODE}
+  custom:
+    enabled: true
+    secrets:
+      - name: yandex-crt
+        type: Opaque
+        data:
+          yandex.crt: ${YANDEX_CRT_B64}
+
+preInstallJobs:
+  enabled: true
+  separate_jobs_on_pod:
+    enabled: true
+  volumes:
+    enabled: true
+    volumeMounts:
+      - name: migrations
+        type: configmap
+        configMap: ecom-template-go-outside-configmap
+      - name: yandex-crt-volume
+        type: secret
+        secret: secret-yandex-crt
+  containers:
+    - name: migrations
+      weight: 1
+      image: 
+        enabled: true
+        repository: registry-gitlab16.skiftrade.kz/image/flyway
+        tag: v8.5.13
+      command: flyway migrate;
+      envs:
+        enabled: true
+      envFromSecret:
+        enabled: true
+        name: env-from
+      volumes:
+        enabled: true
+        volumeMounts:
+          migrations:
+            path: /migrations
+          yandex-crt-volume:
+            path: /yandex_crt/yandex.crt
+            subPath:
+              enabled: true
+              path: yandex.crt
+
+preUpgradeJobs:
+  enabled: true
+  separate_jobs_on_pod:
+    enabled: true
+  volumes:
+    enabled: true
+    volumeMounts:
+      #- name: migrations
+      #  type: configmap
+      #  configMap: ecom-template-go-outside-configmap
+      - name: yandex-crt-volume
+        type: secret
+        secret: secret-yandex-crt
+  containers:
+    - name: migrations
+      weight: 1
+      image: 
+        enabled: true
+        repository: registry-gitlab16.skiftrade.kz/image/flyway
+        tag: v8.5.13
+      command: flyway migrate;
+      envs:
+        enabled: true
+      envFromSecret:
+        enabled: true
+        name: env-from
+      volumes:
+        enabled: true
+        volumeMounts:
+          migrations:
+            path: /migrations
+          yandex-crt-volume:
+            path: /yandex_crt/yandex.crt
+            subPath:
+              enabled: true
+              path: yandex.crt
+
+configFiles:
+  enabled: true
+  outside:
+    split: false
+    enabled: true
+
+nodeSelector:
+  env: ecom-prod

@@ -1,0 +1,264 @@
+linter:
+  image: registry-gitlab16.skiftrade.kz/lib/service-golang:v2.1
+  variables:
+    GOPATH: "${CI_PROJECT_DIR}/.go"
+    GO111MODULE: 'on'
+  before_script:
+    - mkdir -p $(dirname ${GOPATH}/src/${CI_SERVER_HOST}/${CI_PROJECT_PATH})
+    - ln -s ${CI_PROJECT_DIR} ${GOPATH}/src/${CI_SERVER_HOST}/${CI_PROJECT_PATH}
+  retry: 2
+  script:
+    - "/golangci-lint/golangci-lint run -v --timeout=5m"
+  tags:
+    - docker
+  interruptible: true
+  stage: tests
+
+test:
+  image: registry-gitlab16.skiftrade.kz/lib/service-golang:v2.1
+  variables:
+    GOPATH: "${CI_PROJECT_DIR}/.go"
+    GO111MODULE: 'on'
+    TAGS: ''
+  before_script:
+    - mkdir -p $(dirname ${GOPATH}/src/${CI_SERVER_HOST}/${CI_PROJECT_PATH})
+    - ln -s ${CI_PROJECT_DIR} ${GOPATH}/src/${CI_SERVER_HOST}/${CI_PROJECT_PATH}
+  when: on_success
+  script:
+    - go test -v -tags=$TAGS ./... -race -coverprofile=coverage.out
+    - go tool cover -func=coverage.out | grep total
+    - go tool cover -html=coverage.out -o coverage.html
+  tags:
+    - docker
+  artifacts:
+    paths:
+      - coverage.html
+    expire_in: 30 days
+  interruptible: true
+  stage: tests
+
+    ### Semgrep ###
+semgrep-go:
+  image: registry-gitlab16.skiftrade.kz/lib/images/returntocorp/semgrep
+  extends:
+    - .main-rules
+  script:
+    - semgrep -f semgrep-go/ . --json > ./${CI_JOB_NAME}-report.json || true
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${CI_JOB_NAME}-report.json
+    expire_in: 1 hour
+  tags:
+  - docker
+  interruptible: true
+  stage: tests
+
+semgrep-std:
+  image: registry-gitlab16.skiftrade.kz/lib/images/returntocorp/semgrep
+  extends:
+    - .main-rules
+  script:
+    - semgrep . --json > ./${CI_JOB_NAME}-report.json || true
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${CI_JOB_NAME}-report.json
+    expire_in: 1 hour
+  tags:
+  - docker
+  interruptible: true
+  stage: tests
+
+semgrep-go-report:
+  extends:
+    - .main-rules
+  stage: tests
+  variables:
+    DDOJO_HOST: "http://192.168.10.170:8080"
+    REPORT: semgrep-go-report.json
+    SCAN_TYPE: "Semgrep JSON Report"
+    ENGAGEMENT_NAME: "Semgrep-go"
+    PRODUCT_TYPE_NAME: "Research and Development"
+  needs:
+    - job: semgrep-go
+      artifacts: true
+  tags:
+    - shell
+  interruptible: true
+  script:
+    - !reference [.ddojo-report, script]
+
+semgrep-std-report:
+  extends:
+    - .main-rules
+  stage: tests
+  variables:
+    DDOJO_HOST: "http://192.168.10.170:8080"
+    REPORT: semgrep-std-report.json
+    SCAN_TYPE: "Semgrep JSON Report"
+    ENGAGEMENT_NAME: "Semgrep-std"
+    PRODUCT_TYPE_NAME: "Research and Development"
+  needs:
+    - job: semgrep-std
+      artifacts: true
+  tags:
+    - shell
+  interruptible: true
+  script:
+    - !reference [.ddojo-report, script]
+#############
+
+### GOSec ###
+gosec:
+  image:
+    name: registry-gitlab16.skiftrade.kz/lib/images/securego/gosec:2.19.0
+    entrypoint: ["/bin/sh", "-c"]
+  extends:
+    - .main-rules
+  script:
+     - gosec -fmt=json -out=${CI_JOB_NAME}-report.json -exclude-dir=test -exclude-dir=testdata -exclude-dir=semgrep-go -conf gosec_cfg.json ./... || true
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${CI_JOB_NAME}-report.json
+    expire_in: 1 hour
+  tags:
+  - docker
+  interruptible: true
+  stage: tests
+
+gosec-report:
+  extends:
+    - .main-rules
+  stage: tests
+  variables:
+    DDOJO_HOST: "http://192.168.10.170:8080"
+    REPORT: gosec-report.json
+    SCAN_TYPE: "Gosec Scanner"
+    ENGAGEMENT_NAME: "Gosec"
+    PRODUCT_TYPE_NAME: "Research and Development"
+  needs:
+    - job: gosec
+      artifacts: true
+  tags:
+    - shell
+  interruptible: true
+  script:
+    - !reference [.ddojo-report, script]
+#############
+
+### cyclonedx ###
+cyclonedx:
+  image:
+    name: registry-gitlab16.skiftrade.kz/lib/images/cyclonedx-gomod:v1.6.0
+  extends:
+    - .main-rules
+  script:
+    - mv go.mod _go.mod
+    - sed '2,$ s/gitlab/\/\/gitlab/g' _go.mod > go.mod
+    - /root/go/bin/cyclonedx-gomod mod -json -output bom.json
+    - mv _go.mod go.mod
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/bom.json
+    expire_in: 1 hour
+  tags:
+  - docker
+  interruptible: true
+  stage: tests
+
+cyclonedx-report:
+  extends:
+    - .main-rules
+  stage: tests
+  variables:
+    DT_API_ADDR: "http://192.168.10.170:8081"
+  #  DT_PROJECT: "5295f662-0432-4e12-b248-92ae0a8ab4b7"
+  needs:
+    - job: cyclonedx
+      artifacts: true
+  tags:
+    - shell
+  interruptible: true
+  script:
+    - |
+      curl -X POST "${DT_API_ADDR}/api/v1/bom/" \
+        -H "Content-Type: multipart/form-data" \
+        -H "X-API-Key: ${DT_TOKEN}" \
+        -F "project=${DT_PROJECT}" \
+        -F "bom=@bom.json"
+################
+
+### Gitleaks ###
+gitleaks:
+  image: registry-gitlab16.skiftrade.kz/lib/images/gitleaks/gitleaks-8.18.4
+  extends:
+    - .main-rules
+  before_script:
+    - rm -rf ${CI_JOB_NAME}-report.json
+  script:
+    - gitleaks detect --exit-code 0 --no-git -r ${CI_JOB_NAME}-report.json
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${CI_JOB_NAME}-report.json
+    expire_in: 1 hour
+  tags:
+  - docker
+  interruptible: true
+  stage: tests
+
+gitleaks-report:
+  extends:
+    - .main-rules
+  stage: tests
+  variables:
+    DDOJO_HOST: "http://192.168.10.170:8080"
+    REPORT: gitleaks-report.json
+    SCAN_TYPE: "Gitleaks Scan"
+    ENGAGEMENT_NAME: "Gitleaks"
+    PRODUCT_TYPE_NAME: "Research and Development"
+  needs:
+    - job: gitleaks
+      artifacts: true
+  tags:
+    - shell
+  interruptible: true
+  script:
+    - !reference [.ddojo-report, script]
+###############
+
+### Trufflehog ###
+trufflehog:
+  image: registry-gitlab16.skiftrade.kz/lib/images/trufflesecurity/trufflehog-3.79.0
+  extends:
+    - .main-rules
+  before_script:
+    - rm -rf ${CI_JOB_NAME}-report.json
+  script:
+    - trufflehog filesystem --no-fail -x .truffignore -j . > ${CI_JOB_NAME}-report.json
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${CI_JOB_NAME}-report.json
+    expire_in: 1 hour
+  tags:
+  - docker
+  interruptible: true
+  stage: tests
+
+trufflehog-report:
+  extends:
+    - .main-rules
+  stage: tests
+  variables:
+    DDOJO_HOST: "http://192.168.10.170:8080"
+    REPORT: trufflehog-report.json
+    SCAN_TYPE: "Trufflehog Scan"
+    ENGAGEMENT_NAME: "Trufflehog"
+    PRODUCT_TYPE_NAME: "Research and Development"
+  needs:
+    - job: trufflehog
+      artifacts: true
+  tags:
+    - shell
+  interruptible: true
+  script:
+    - !reference [.ddojo-report, script]
+  ####################

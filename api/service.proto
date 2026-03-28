@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package api.gotemplate;
+
+import "google/api/field_behavior.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "github.com/twelvepills-936/tgapp-/api;gotemplate";
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "GO Template"
+    version: "1.0.0"
+  }
+};
+
+service Users {
+  rpc GetUser (GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {
+      get: "/v1/user"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "GetUser"
+      description: "Метод для получения пользователя"
+    };
+  }
+}
+
+
+// CyberMate API
+service CyberMate {
+  // Registers a user based on Telegram init data; creates Profile and Wallet
+  rpc RegisterByTelegram (RegisterByTelegramRequest) returns (RegisterByTelegramResponse) {
+    option (google.api.http) = {
+      post: "/v1/register"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "RegisterByTelegram"
+      description: "Register user by Telegram WebApp init data"
+    };
+  }
+
+  // Returns user profile by telegram_id
+  rpc GetUserByTelegramId (GetUserByTelegramIdRequest) returns (GetUserResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/telegram/{telegram_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "GetUserByTelegramId"
+      description: "Get user profile by telegram id"
+    };
+  }
+}
+
+message GetUserRequest {
+  int64 user_id = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "The UserId field description"
+    },
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+message GetUserResponse {
+  User data = 1;
+}
+
+message User {
+  int64 id = 1;
+  string name = 2;
+  string surname = 3;
+}
+
+// CyberMate messages
+message RegisterByTelegramRequest {
+  string init_data_raw = 1 [(google.api.field_behavior) = REQUIRED];
+  string start_param = 2; // referrer telegram_id
+}
+
+message RegisterByTelegramResponse {
+  int64 profile_id = 1;
+}
+
+message GetUserByTelegramIdRequest {
+  string telegram_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
