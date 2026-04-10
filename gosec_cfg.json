@@ -1,9 +1,0 @@
-{
-  "global": {
-    "nosec": true,
-    "audit": "enabled",
-    "show-ignored": true,
-    "exclude": "G601",
-    "#nosec": "#falsePositive"
-  }
-}

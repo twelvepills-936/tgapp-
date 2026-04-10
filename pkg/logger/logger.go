@@ -33,4 +33,3 @@ func IntAttr(key string, value int) slog.Attr {
 func Int64Attr(key string, value int64) slog.Attr {
 	return slog.Int64(key, value)
 }
-

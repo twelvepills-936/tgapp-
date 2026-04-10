@@ -1,15 +1,12 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "GO Template",
+    "title": "CyberMate API",
     "version": "1.0.0"
   },
   "tags": [
     {
-      "name": "Users"
-    },
-    {
-      "name": "Facebase"
+      "name": "CyberMate"
     }
   ],
   "consumes": [
@@ -23,7 +20,7 @@
       "post": {
         "summary": "RegisterByTelegram",
         "description": "Register user by Telegram WebApp init data",
-        "operationId": "Facebase_RegisterByTelegram",
+        "operationId": "CyberMate_RegisterByTelegram",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -49,41 +46,7 @@
           }
         ],
         "tags": [
-          "Facebase"
-        ]
-      }
-    },
-    "/v1/user": {
-      "get": {
-        "summary": "GetUser",
-        "description": "Метод для получения пользователя",
-        "operationId": "Users_GetUser",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/gotemplateGetUserResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "userId",
-            "description": "The UserId field description",
-            "in": "query",
-            "required": true,
-            "type": "string",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "Users"
+          "CyberMate"
         ]
       }
     },
@@ -91,7 +54,7 @@
       "get": {
         "summary": "GetUserByTelegramId",
         "description": "Get user profile by telegram id",
-        "operationId": "Facebase_GetUserByTelegramId",
+        "operationId": "CyberMate_GetUserByTelegramId",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -115,7 +78,7 @@
           }
         ],
         "tags": [
-          "Facebase"
+          "CyberMate"
         ]
       }
     }
@@ -140,7 +103,7 @@
           "title": "referrer telegram_id"
         }
       },
-      "title": "Facebase messages",
+      "title": "CyberMate messages",
       "required": [
         "initDataRaw"
       ]

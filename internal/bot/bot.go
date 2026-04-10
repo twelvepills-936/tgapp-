@@ -1,4 +1,4 @@
-package bot
+﻿package bot
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func (b *Bot) StartPolling(ctx context.Context) {
 		case upd := <-updates:
 			if upd.Message != nil && upd.Message.IsCommand() && upd.Message.Command() == "start" {
 				name := upd.Message.From.FirstName
-				msg := tgbotapi.NewMessage(upd.Message.Chat.ID, "Добро пожаловать в Facebase, "+name+"💚\n– Получайте рекламные задания...")
+				msg := tgbotapi.NewMessage(upd.Message.Chat.ID, "Добро пожаловать в CyberMate, "+name+"💚\n– Получайте рекламные задания...")
 				if _, err := b.api.Send(msg); err != nil {
 					slog.ErrorContext(ctx, "failed to send telegram message", slog.Any("error", err))
 				}
@@ -61,5 +61,3 @@ func (b *Bot) SendMessage(telegramID int64, text string, buttons []tgbotapi.Inli
 	_, err := b.api.Send(msg)
 	return err
 }
-
-

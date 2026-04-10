@@ -1,4 +1,4 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 package api.gotemplate;
 
@@ -9,26 +9,13 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 option go_package = "gitlab16.skiftrade.kz/templates/go/api;gotemplate";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
-    title: "GO Template"
+    title: "CyberMate API"
     version: "1.0.0"
   }
 };
 
-service Users {
-  rpc GetUser (GetUserRequest) returns (GetUserResponse) {
-    option (google.api.http) = {
-      get: "/v1/user"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "GetUser"
-      description: "Метод для получения пользователя"
-    };
-  }
-}
-
-
-// Facebase API
-service Facebase {
+// CyberMate API
+service CyberMate {
   // Registers a user based on Telegram init data; creates Profile and Wallet
   rpc RegisterByTelegram (RegisterByTelegramRequest) returns (RegisterByTelegramResponse) {
     option (google.api.http) = {
@@ -53,15 +40,6 @@ service Facebase {
   }
 }
 
-message GetUserRequest {
-  int64 user_id = 1 [
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "The UserId field description"
-    },
-    (google.api.field_behavior) = REQUIRED
-  ];
-}
-
 message GetUserResponse {
   User data = 1;
 }
@@ -72,7 +50,7 @@ message User {
   string surname = 3;
 }
 
-// Facebase messages
+// CyberMate messages
 message RegisterByTelegramRequest {
   string init_data_raw = 1 [(google.api.field_behavior) = REQUIRED];
   string start_param = 2; // referrer telegram_id

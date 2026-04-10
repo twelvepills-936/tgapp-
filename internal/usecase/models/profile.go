@@ -36,20 +36,18 @@ func (i *RegisterByTelegramInput) Validate() error {
 }
 
 type RegisterByTelegramOutput struct {
-    ProfileID int64
+	ProfileID int64
 }
 
 type GetProfileOutput struct {
-    Data ProfileUser
+	Data ProfileUser
 }
 
 type ProfileUser struct {
-    ID         int64
-    Name       string
-    TelegramID string
-    Avatar     string
-    Username   string
-    Verified   bool
+	ID         int64
+	Name       string
+	TelegramID string
+	Avatar     string
+	Username   string
+	Verified   bool
 }
-
-

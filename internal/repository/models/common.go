@@ -1,19 +1,18 @@
 package models
 
 import (
-    "time"
+	"time"
 )
 
 type ConfigPostgres struct {
-	Host           string
-	Port           string
-	User           string
-	Pass           string
-	DBName         string
-	SSLMode        string
-	SSLRootCert    string
-	Debug          bool
-	DriverLogLevel string
+	Host        string
+	Port        string
+	User        string
+	Pass        string
+	DBName      string
+	SSLMode     string
+	SSLRootCert string
+	Debug       bool
 
 	PoolStatPeriod        time.Duration
 	PoolMaxConns          int64
@@ -22,6 +21,3 @@ type ConfigPostgres struct {
 	PoolMaxConnIdleTime   time.Duration
 	PoolHealthCheckPeriod time.Duration
 }
-
-var (
-)

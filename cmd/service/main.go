@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"context"
@@ -16,8 +16,10 @@ import (
 )
 
 func main() {
-	ctx, c := context.WithCancel(context.Background())
-	defer c()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	addConfig := config.LoadConfig()
 
 	cfg := app.LoadConfigFromEnv()
 
@@ -26,15 +28,12 @@ func main() {
 		panic(err)
 	}
 
-	addConfig := config.LoadConfig()
-
-	// Telegram bot initialization
-	// Bot is created but polling is not started here to avoid blocking the service.
-	// If needed, run bot.StartPolling(ctx) in a separate goroutine.
-	_, err = bot.New()
+	// Telegram bot: start polling in background if token is configured.
+	b, err := bot.New()
 	if err != nil {
 		slog.WarnContext(ctx, "failed to init bot", logger.ErrorAttr(err))
-		// Continue without bot - it's not critical for service startup
+	} else {
+		go b.StartPolling(ctx)
 	}
 
 	pool, err := repository.NewPostgres(ctx, repoModels.ConfigPostgres(addConfig.Postgres))
@@ -45,28 +44,21 @@ func main() {
 	defer pool.Close()
 	repo := repository.NewRepository(pool)
 
-	// Create single instances of usecase and service
 	uc := usecase.NewUseCase(repo)
 	svc := service.NewService(uc)
 
 	// Register gRPC services BEFORE starting the server
-	api.RegisterUsersServer(application.GrpcServer, svc)
-	api.RegisterFacebaseServer(application.GrpcServer, svc)
+	api.RegisterCyberMateServer(application.GrpcServer, svc)
 
 	err = application.Init(ctx)
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to init app", logger.ErrorAttr(err))
 		return
 	}
-	err = api.RegisterUsersHandler(ctx, application.ServeMux, application.GrpcConn)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to register users handler", logger.ErrorAttr(err))
-		return
-	}
 
-	err = api.RegisterFacebaseHandler(ctx, application.ServeMux, application.GrpcConn)
+	err = api.RegisterCyberMateHandler(ctx, application.ServeMux, application.GrpcConn)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to register facebase handler", logger.ErrorAttr(err))
+		slog.ErrorContext(ctx, "failed to register cybermate handler", logger.ErrorAttr(err))
 		return
 	}
 

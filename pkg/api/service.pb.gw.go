@@ -35,42 +35,7 @@ var (
 	_ = metadata.Join
 )
 
-var filter_Users_GetUser_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-
-func request_Users_GetUser_0(ctx context.Context, marshaler runtime.Marshaler, client UsersClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq GetUserRequest
-		metadata runtime.ServerMetadata
-	)
-	if req.Body != nil {
-		_, _ = io.Copy(io.Discard, req.Body)
-	}
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Users_GetUser_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	msg, err := client.GetUser(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-}
-
-func local_request_Users_GetUser_0(ctx context.Context, marshaler runtime.Marshaler, server UsersServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var (
-		protoReq GetUserRequest
-		metadata runtime.ServerMetadata
-	)
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Users_GetUser_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	msg, err := server.GetUser(ctx, &protoReq)
-	return msg, metadata, err
-}
-
-func request_Facebase_RegisterByTelegram_0(ctx context.Context, marshaler runtime.Marshaler, client FacebaseClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_CyberMate_RegisterByTelegram_0(ctx context.Context, marshaler runtime.Marshaler, client CyberMateClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq RegisterByTelegramRequest
 		metadata runtime.ServerMetadata
@@ -85,7 +50,7 @@ func request_Facebase_RegisterByTelegram_0(ctx context.Context, marshaler runtim
 	return msg, metadata, err
 }
 
-func local_request_Facebase_RegisterByTelegram_0(ctx context.Context, marshaler runtime.Marshaler, server FacebaseServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_CyberMate_RegisterByTelegram_0(ctx context.Context, marshaler runtime.Marshaler, server CyberMateServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq RegisterByTelegramRequest
 		metadata runtime.ServerMetadata
@@ -97,7 +62,7 @@ func local_request_Facebase_RegisterByTelegram_0(ctx context.Context, marshaler 
 	return msg, metadata, err
 }
 
-func request_Facebase_GetUserByTelegramId_0(ctx context.Context, marshaler runtime.Marshaler, client FacebaseClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_CyberMate_GetUserByTelegramId_0(ctx context.Context, marshaler runtime.Marshaler, client CyberMateClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq GetUserByTelegramIdRequest
 		metadata runtime.ServerMetadata
@@ -118,7 +83,7 @@ func request_Facebase_GetUserByTelegramId_0(ctx context.Context, marshaler runti
 	return msg, metadata, err
 }
 
-func local_request_Facebase_GetUserByTelegramId_0(ctx context.Context, marshaler runtime.Marshaler, server FacebaseServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_CyberMate_GetUserByTelegramId_0(ctx context.Context, marshaler runtime.Marshaler, server CyberMateServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq GetUserByTelegramIdRequest
 		metadata runtime.ServerMetadata
@@ -136,89 +101,59 @@ func local_request_Facebase_GetUserByTelegramId_0(ctx context.Context, marshaler
 	return msg, metadata, err
 }
 
-// RegisterUsersHandlerServer registers the http handlers for service Users to "mux".
-// UnaryRPC     :call UsersServer directly.
+// RegisterCyberMateHandlerServer registers the http handlers for service CyberMate to "mux".
+// UnaryRPC     :call CyberMateServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterUsersHandlerFromEndpoint instead.
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterCyberMateHandlerFromEndpoint instead.
 // GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
-func RegisterUsersHandlerServer(ctx context.Context, mux *runtime.ServeMux, server UsersServer) error {
-	mux.Handle(http.MethodGet, pattern_Users_GetUser_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+func RegisterCyberMateHandlerServer(ctx context.Context, mux *runtime.ServeMux, server CyberMateServer) error {
+	mux.Handle(http.MethodPost, pattern_CyberMate_RegisterByTelegram_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/api.gotemplate.Users/GetUser", runtime.WithHTTPPathPattern("/v1/user"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/api.gotemplate.CyberMate/RegisterByTelegram", runtime.WithHTTPPathPattern("/v1/register"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Users_GetUser_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_CyberMate_RegisterByTelegram_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		forward_Users_GetUser_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_CyberMate_RegisterByTelegram_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_CyberMate_GetUserByTelegramId_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/api.gotemplate.CyberMate/GetUserByTelegramId", runtime.WithHTTPPathPattern("/v1/users/telegram/{telegram_id}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_CyberMate_GetUserByTelegramId_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_CyberMate_GetUserByTelegramId_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
 }
 
-// RegisterFacebaseHandlerServer registers the http handlers for service Facebase to "mux".
-// UnaryRPC     :call FacebaseServer directly.
-// StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterFacebaseHandlerFromEndpoint instead.
-// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
-func RegisterFacebaseHandlerServer(ctx context.Context, mux *runtime.ServeMux, server FacebaseServer) error {
-	mux.Handle(http.MethodPost, pattern_Facebase_RegisterByTelegram_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/api.gotemplate.Facebase/RegisterByTelegram", runtime.WithHTTPPathPattern("/v1/register"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_Facebase_RegisterByTelegram_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_Facebase_RegisterByTelegram_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
-	mux.Handle(http.MethodGet, pattern_Facebase_GetUserByTelegramId_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/api.gotemplate.Facebase/GetUserByTelegramId", runtime.WithHTTPPathPattern("/v1/users/telegram/{telegram_id}"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_Facebase_GetUserByTelegramId_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_Facebase_GetUserByTelegramId_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
-
-	return nil
-}
-
-// RegisterUsersHandlerFromEndpoint is same as RegisterUsersHandler but
+// RegisterCyberMateHandlerFromEndpoint is same as RegisterCyberMateHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterUsersHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterCyberMateHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return err
@@ -237,128 +172,64 @@ func RegisterUsersHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux
 			}
 		}()
 	}()
-	return RegisterUsersHandler(ctx, mux, conn)
+	return RegisterCyberMateHandler(ctx, mux, conn)
 }
 
-// RegisterUsersHandler registers the http handlers for service Users to "mux".
+// RegisterCyberMateHandler registers the http handlers for service CyberMate to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterUsersHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterUsersHandlerClient(ctx, mux, NewUsersClient(conn))
+func RegisterCyberMateHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterCyberMateHandlerClient(ctx, mux, NewCyberMateClient(conn))
 }
 
-// RegisterUsersHandlerClient registers the http handlers for service Users
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "UsersClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "UsersClient"
+// RegisterCyberMateHandlerClient registers the http handlers for service CyberMate
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "CyberMateClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "CyberMateClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "UsersClient" to call the correct interceptors. This client ignores the HTTP middlewares.
-func RegisterUsersHandlerClient(ctx context.Context, mux *runtime.ServeMux, client UsersClient) error {
-	mux.Handle(http.MethodGet, pattern_Users_GetUser_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+// "CyberMateClient" to call the correct interceptors. This client ignores the HTTP middlewares.
+func RegisterCyberMateHandlerClient(ctx context.Context, mux *runtime.ServeMux, client CyberMateClient) error {
+	mux.Handle(http.MethodPost, pattern_CyberMate_RegisterByTelegram_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/api.gotemplate.Users/GetUser", runtime.WithHTTPPathPattern("/v1/user"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/api.gotemplate.CyberMate/RegisterByTelegram", runtime.WithHTTPPathPattern("/v1/register"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Users_GetUser_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_CyberMate_RegisterByTelegram_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		forward_Users_GetUser_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_CyberMate_RegisterByTelegram_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_CyberMate_GetUserByTelegramId_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/api.gotemplate.CyberMate/GetUserByTelegramId", runtime.WithHTTPPathPattern("/v1/users/telegram/{telegram_id}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_CyberMate_GetUserByTelegramId_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_CyberMate_GetUserByTelegramId_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	return nil
 }
 
 var (
-	pattern_Users_GetUser_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "user"}, ""))
+	pattern_CyberMate_RegisterByTelegram_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "register"}, ""))
+	pattern_CyberMate_GetUserByTelegramId_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "users", "telegram", "telegram_id"}, ""))
 )
 
 var (
-	forward_Users_GetUser_0 = runtime.ForwardResponseMessage
-)
-
-// RegisterFacebaseHandlerFromEndpoint is same as RegisterFacebaseHandler but
-// automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterFacebaseHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.NewClient(endpoint, opts...)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			if cerr := conn.Close(); cerr != nil {
-				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
-			}
-			return
-		}
-		go func() {
-			<-ctx.Done()
-			if cerr := conn.Close(); cerr != nil {
-				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
-			}
-		}()
-	}()
-	return RegisterFacebaseHandler(ctx, mux, conn)
-}
-
-// RegisterFacebaseHandler registers the http handlers for service Facebase to "mux".
-// The handlers forward requests to the grpc endpoint over "conn".
-func RegisterFacebaseHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterFacebaseHandlerClient(ctx, mux, NewFacebaseClient(conn))
-}
-
-// RegisterFacebaseHandlerClient registers the http handlers for service Facebase
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "FacebaseClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "FacebaseClient"
-// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "FacebaseClient" to call the correct interceptors. This client ignores the HTTP middlewares.
-func RegisterFacebaseHandlerClient(ctx context.Context, mux *runtime.ServeMux, client FacebaseClient) error {
-	mux.Handle(http.MethodPost, pattern_Facebase_RegisterByTelegram_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/api.gotemplate.Facebase/RegisterByTelegram", runtime.WithHTTPPathPattern("/v1/register"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_Facebase_RegisterByTelegram_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_Facebase_RegisterByTelegram_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
-	mux.Handle(http.MethodGet, pattern_Facebase_GetUserByTelegramId_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/api.gotemplate.Facebase/GetUserByTelegramId", runtime.WithHTTPPathPattern("/v1/users/telegram/{telegram_id}"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_Facebase_GetUserByTelegramId_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		forward_Facebase_GetUserByTelegramId_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-	})
-	return nil
-}
-
-var (
-	pattern_Facebase_RegisterByTelegram_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "register"}, ""))
-	pattern_Facebase_GetUserByTelegramId_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "users", "telegram", "telegram_id"}, ""))
-)
-
-var (
-	forward_Facebase_RegisterByTelegram_0  = runtime.ForwardResponseMessage
-	forward_Facebase_GetUserByTelegramId_0 = runtime.ForwardResponseMessage
+	forward_CyberMate_RegisterByTelegram_0  = runtime.ForwardResponseMessage
+	forward_CyberMate_GetUserByTelegramId_0 = runtime.ForwardResponseMessage
 )
