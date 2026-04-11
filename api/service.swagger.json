@@ -16,6 +16,104 @@
     "application/json"
   ],
   "paths": {
+    "/v1/prompts/history": {
+      "post": {
+        "summary": "CreatePromptHistory",
+        "description": "Save prompt history for a Telegram user",
+        "operationId": "CyberMate_CreatePromptHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gotemplateCreatePromptHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gotemplateCreatePromptHistoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CyberMate"
+        ]
+      }
+    },
+    "/v1/prompts/history/telegram/{telegramId}": {
+      "get": {
+        "summary": "GetPromptHistoryByTelegramId",
+        "description": "Get prompt history by telegram id",
+        "operationId": "CyberMate_GetPromptHistoryByTelegramId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gotemplateGetPromptHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "telegramId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CyberMate"
+        ]
+      }
+    },
+    "/v1/referrals/telegram/{telegramId}": {
+      "get": {
+        "summary": "GetReferralsByTelegramId",
+        "description": "Get referrals by telegram id",
+        "operationId": "CyberMate_GetReferralsByTelegramId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gotemplateGetReferralsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "telegramId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CyberMate"
+        ]
+      }
+    },
     "/v1/register": {
       "post": {
         "summary": "RegisterByTelegram",
@@ -81,14 +179,155 @@
           "CyberMate"
         ]
       }
+    },
+    "/v1/wallet/telegram/{telegramId}": {
+      "get": {
+        "summary": "GetWalletByTelegramId",
+        "description": "Get wallet summary and recent transactions by telegram id",
+        "operationId": "CyberMate_GetWalletByTelegramId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gotemplateGetWalletResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "telegramId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CyberMate"
+        ]
+      }
     }
   },
   "definitions": {
+    "gotemplateCreatePromptHistoryRequest": {
+      "type": "object",
+      "properties": {
+        "telegramId": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "telegramId",
+        "prompt"
+      ]
+    },
+    "gotemplateCreatePromptHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/gotemplatePromptHistoryItem"
+        }
+      }
+    },
+    "gotemplateGetPromptHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/gotemplatePromptHistoryItem"
+          }
+        }
+      }
+    },
+    "gotemplateGetReferralsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/gotemplateReferralItem"
+          }
+        }
+      }
+    },
     "gotemplateGetUserResponse": {
       "type": "object",
       "properties": {
         "data": {
           "$ref": "#/definitions/gotemplateUser"
+        }
+      }
+    },
+    "gotemplateGetWalletResponse": {
+      "type": "object",
+      "properties": {
+        "wallet": {
+          "$ref": "#/definitions/gotemplateWalletData"
+        },
+        "transactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/gotemplateWalletTransactionItem"
+          }
+        }
+      }
+    },
+    "gotemplatePromptHistoryItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "gotemplateReferralItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "telegramId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "completedTasksCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "earnings": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },
@@ -128,6 +367,56 @@
           "type": "string"
         },
         "surname": {
+          "type": "string"
+        }
+      }
+    },
+    "gotemplateWalletData": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "balance": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalEarned": {
+          "type": "string",
+          "format": "int64"
+        },
+        "balanceAvailable": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "gotemplateWalletTransactionItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "date": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "status": {
+          "type": "string"
+        },
+        "description": {
           "type": "string"
         }
       }

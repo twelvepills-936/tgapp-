@@ -19,8 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CyberMate_RegisterByTelegram_FullMethodName  = "/api.gotemplate.CyberMate/RegisterByTelegram"
-	CyberMate_GetUserByTelegramId_FullMethodName = "/api.gotemplate.CyberMate/GetUserByTelegramId"
+	CyberMate_RegisterByTelegram_FullMethodName           = "/api.gotemplate.CyberMate/RegisterByTelegram"
+	CyberMate_GetUserByTelegramId_FullMethodName          = "/api.gotemplate.CyberMate/GetUserByTelegramId"
+	CyberMate_GetWalletByTelegramId_FullMethodName        = "/api.gotemplate.CyberMate/GetWalletByTelegramId"
+	CyberMate_GetReferralsByTelegramId_FullMethodName     = "/api.gotemplate.CyberMate/GetReferralsByTelegramId"
+	CyberMate_CreatePromptHistory_FullMethodName          = "/api.gotemplate.CyberMate/CreatePromptHistory"
+	CyberMate_GetPromptHistoryByTelegramId_FullMethodName = "/api.gotemplate.CyberMate/GetPromptHistoryByTelegramId"
 )
 
 // CyberMateClient is the client API for CyberMate service.
@@ -33,6 +37,14 @@ type CyberMateClient interface {
 	RegisterByTelegram(ctx context.Context, in *RegisterByTelegramRequest, opts ...grpc.CallOption) (*RegisterByTelegramResponse, error)
 	// Returns user profile by telegram_id
 	GetUserByTelegramId(ctx context.Context, in *GetUserByTelegramIdRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	// Returns wallet summary and recent transactions.
+	GetWalletByTelegramId(ctx context.Context, in *GetWalletByTelegramIdRequest, opts ...grpc.CallOption) (*GetWalletResponse, error)
+	// Returns the referral list for the current user.
+	GetReferralsByTelegramId(ctx context.Context, in *GetReferralsByTelegramIdRequest, opts ...grpc.CallOption) (*GetReferralsResponse, error)
+	// Saves a prompt to the current user's history.
+	CreatePromptHistory(ctx context.Context, in *CreatePromptHistoryRequest, opts ...grpc.CallOption) (*CreatePromptHistoryResponse, error)
+	// Returns saved prompt history for the current user.
+	GetPromptHistoryByTelegramId(ctx context.Context, in *GetPromptHistoryByTelegramIdRequest, opts ...grpc.CallOption) (*GetPromptHistoryResponse, error)
 }
 
 type cyberMateClient struct {
@@ -63,6 +75,46 @@ func (c *cyberMateClient) GetUserByTelegramId(ctx context.Context, in *GetUserBy
 	return out, nil
 }
 
+func (c *cyberMateClient) GetWalletByTelegramId(ctx context.Context, in *GetWalletByTelegramIdRequest, opts ...grpc.CallOption) (*GetWalletResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetWalletResponse)
+	err := c.cc.Invoke(ctx, CyberMate_GetWalletByTelegramId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cyberMateClient) GetReferralsByTelegramId(ctx context.Context, in *GetReferralsByTelegramIdRequest, opts ...grpc.CallOption) (*GetReferralsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetReferralsResponse)
+	err := c.cc.Invoke(ctx, CyberMate_GetReferralsByTelegramId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cyberMateClient) CreatePromptHistory(ctx context.Context, in *CreatePromptHistoryRequest, opts ...grpc.CallOption) (*CreatePromptHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreatePromptHistoryResponse)
+	err := c.cc.Invoke(ctx, CyberMate_CreatePromptHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cyberMateClient) GetPromptHistoryByTelegramId(ctx context.Context, in *GetPromptHistoryByTelegramIdRequest, opts ...grpc.CallOption) (*GetPromptHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPromptHistoryResponse)
+	err := c.cc.Invoke(ctx, CyberMate_GetPromptHistoryByTelegramId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CyberMateServer is the server API for CyberMate service.
 // All implementations must embed UnimplementedCyberMateServer
 // for forward compatibility.
@@ -73,6 +125,14 @@ type CyberMateServer interface {
 	RegisterByTelegram(context.Context, *RegisterByTelegramRequest) (*RegisterByTelegramResponse, error)
 	// Returns user profile by telegram_id
 	GetUserByTelegramId(context.Context, *GetUserByTelegramIdRequest) (*GetUserResponse, error)
+	// Returns wallet summary and recent transactions.
+	GetWalletByTelegramId(context.Context, *GetWalletByTelegramIdRequest) (*GetWalletResponse, error)
+	// Returns the referral list for the current user.
+	GetReferralsByTelegramId(context.Context, *GetReferralsByTelegramIdRequest) (*GetReferralsResponse, error)
+	// Saves a prompt to the current user's history.
+	CreatePromptHistory(context.Context, *CreatePromptHistoryRequest) (*CreatePromptHistoryResponse, error)
+	// Returns saved prompt history for the current user.
+	GetPromptHistoryByTelegramId(context.Context, *GetPromptHistoryByTelegramIdRequest) (*GetPromptHistoryResponse, error)
 	mustEmbedUnimplementedCyberMateServer()
 }
 
@@ -88,6 +148,18 @@ func (UnimplementedCyberMateServer) RegisterByTelegram(context.Context, *Registe
 }
 func (UnimplementedCyberMateServer) GetUserByTelegramId(context.Context, *GetUserByTelegramIdRequest) (*GetUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUserByTelegramId not implemented")
+}
+func (UnimplementedCyberMateServer) GetWalletByTelegramId(context.Context, *GetWalletByTelegramIdRequest) (*GetWalletResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWalletByTelegramId not implemented")
+}
+func (UnimplementedCyberMateServer) GetReferralsByTelegramId(context.Context, *GetReferralsByTelegramIdRequest) (*GetReferralsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetReferralsByTelegramId not implemented")
+}
+func (UnimplementedCyberMateServer) CreatePromptHistory(context.Context, *CreatePromptHistoryRequest) (*CreatePromptHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreatePromptHistory not implemented")
+}
+func (UnimplementedCyberMateServer) GetPromptHistoryByTelegramId(context.Context, *GetPromptHistoryByTelegramIdRequest) (*GetPromptHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPromptHistoryByTelegramId not implemented")
 }
 func (UnimplementedCyberMateServer) mustEmbedUnimplementedCyberMateServer() {}
 func (UnimplementedCyberMateServer) testEmbeddedByValue()                   {}
@@ -146,6 +218,78 @@ func _CyberMate_GetUserByTelegramId_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CyberMate_GetWalletByTelegramId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWalletByTelegramIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CyberMateServer).GetWalletByTelegramId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CyberMate_GetWalletByTelegramId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CyberMateServer).GetWalletByTelegramId(ctx, req.(*GetWalletByTelegramIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CyberMate_GetReferralsByTelegramId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetReferralsByTelegramIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CyberMateServer).GetReferralsByTelegramId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CyberMate_GetReferralsByTelegramId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CyberMateServer).GetReferralsByTelegramId(ctx, req.(*GetReferralsByTelegramIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CyberMate_CreatePromptHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePromptHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CyberMateServer).CreatePromptHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CyberMate_CreatePromptHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CyberMateServer).CreatePromptHistory(ctx, req.(*CreatePromptHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CyberMate_GetPromptHistoryByTelegramId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPromptHistoryByTelegramIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CyberMateServer).GetPromptHistoryByTelegramId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CyberMate_GetPromptHistoryByTelegramId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CyberMateServer).GetPromptHistoryByTelegramId(ctx, req.(*GetPromptHistoryByTelegramIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CyberMate_ServiceDesc is the grpc.ServiceDesc for CyberMate service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -160,6 +304,22 @@ var CyberMate_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserByTelegramId",
 			Handler:    _CyberMate_GetUserByTelegramId_Handler,
+		},
+		{
+			MethodName: "GetWalletByTelegramId",
+			Handler:    _CyberMate_GetWalletByTelegramId_Handler,
+		},
+		{
+			MethodName: "GetReferralsByTelegramId",
+			Handler:    _CyberMate_GetReferralsByTelegramId_Handler,
+		},
+		{
+			MethodName: "CreatePromptHistory",
+			Handler:    _CyberMate_CreatePromptHistory_Handler,
+		},
+		{
+			MethodName: "GetPromptHistoryByTelegramId",
+			Handler:    _CyberMate_GetPromptHistoryByTelegramId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

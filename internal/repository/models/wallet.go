@@ -27,3 +27,21 @@ type WithdrawMethod struct {
 	Type     string
 	Details  string
 }
+
+type Referral struct {
+	ID                  int64
+	TelegramID          string
+	Name                string
+	Username            string
+	CompletedTasksCount int64
+	Earnings            int64
+}
+
+type PromptHistory struct {
+	ID         int64
+	ProfileID  int64
+	TelegramID string
+	Prompt     string
+	Category   string
+	CreatedAt  time.Time
+}

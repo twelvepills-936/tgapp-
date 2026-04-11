@@ -1,4 +1,4 @@
-﻿package service
+package service
 
 import (
 	"context"
@@ -46,15 +46,115 @@ func (s *service) RegisterByTelegram(ctx context.Context, req *api.RegisterByTel
 func (s *service) GetUserByTelegramId(ctx context.Context, req *api.GetUserByTelegramIdRequest) (*api.GetUserResponse, error) {
 	out, err := s.uc.GetUserByTelegramID(ctx, req.GetTelegramId())
 	if err != nil {
-		switch {
-		case errors.Is(err, ucModels.ErrProfileNotFound):
-			return nil, status.Error(codes.NotFound, fmt.Sprintf("%s: %s", errorcodes.ProfileNotFound, ucModels.ErrProfileNotFound.Error()))
-		}
-		return nil, status.Error(codes.Internal, fmt.Sprintf("%s: %s", errorcodes.Internal, ucModels.ErrInternalServerError.Error()))
+		return nil, mapProfileLookupError(err)
 	}
 	return &api.GetUserResponse{Data: &api.User{
 		Id:      out.Data.ID,
 		Name:    out.Data.Name,
 		Surname: out.Data.Username,
 	}}, nil
+}
+
+func (s *service) GetWalletByTelegramId(ctx context.Context, req *api.GetWalletByTelegramIdRequest) (*api.GetWalletResponse, error) {
+	out, err := s.uc.GetWalletByTelegramID(ctx, req.GetTelegramId())
+	if err != nil {
+		return nil, mapProfileLookupError(err)
+	}
+
+	transactions := make([]*api.WalletTransactionItem, 0, len(out.Transactions))
+	for _, item := range out.Transactions {
+		transactions = append(transactions, &api.WalletTransactionItem{
+			Id:          item.ID,
+			Date:        item.Date,
+			Type:        item.Type,
+			Amount:      item.Amount,
+			Status:      item.Status,
+			Description: item.Description,
+		})
+	}
+
+	return &api.GetWalletResponse{
+		Wallet: &api.WalletData{
+			Id:               out.Wallet.ID,
+			ProfileId:        out.Wallet.ProfileID,
+			Balance:          out.Wallet.Balance,
+			TotalEarned:      out.Wallet.TotalEarned,
+			BalanceAvailable: out.Wallet.BalanceAvailable,
+		},
+		Transactions: transactions,
+	}, nil
+}
+
+func (s *service) GetReferralsByTelegramId(ctx context.Context, req *api.GetReferralsByTelegramIdRequest) (*api.GetReferralsResponse, error) {
+	out, err := s.uc.GetReferralsByTelegramID(ctx, req.GetTelegramId())
+	if err != nil {
+		return nil, mapProfileLookupError(err)
+	}
+
+	items := make([]*api.ReferralItem, 0, len(out.Items))
+	for _, item := range out.Items {
+		items = append(items, &api.ReferralItem{
+			Id:                  item.ID,
+			TelegramId:          item.TelegramID,
+			Name:                item.Name,
+			Username:            item.Username,
+			CompletedTasksCount: item.CompletedTasksCount,
+			Earnings:            item.Earnings,
+		})
+	}
+
+	return &api.GetReferralsResponse{Items: items}, nil
+}
+
+func (s *service) CreatePromptHistory(ctx context.Context, req *api.CreatePromptHistoryRequest) (*api.CreatePromptHistoryResponse, error) {
+	out, err := s.uc.SavePromptHistory(ctx, ucModels.SavePromptHistoryInput{
+		TelegramID: req.GetTelegramId(),
+		Prompt:     req.GetPrompt(),
+		Category:   req.GetCategory(),
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, ucModels.ErrInvalidInput):
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%s: %s", errorcodes.InvalidArgument, err.Error()))
+		default:
+			return nil, mapProfileLookupError(err)
+		}
+	}
+
+	return &api.CreatePromptHistoryResponse{Item: &api.PromptHistoryItem{
+		Id:        out.Item.ID,
+		Prompt:    out.Item.Prompt,
+		Category:  out.Item.Category,
+		CreatedAt: out.Item.CreatedAt,
+	}}, nil
+}
+
+func (s *service) GetPromptHistoryByTelegramId(ctx context.Context, req *api.GetPromptHistoryByTelegramIdRequest) (*api.GetPromptHistoryResponse, error) {
+	out, err := s.uc.GetPromptHistoryByTelegramID(ctx, req.GetTelegramId())
+	if err != nil {
+		return nil, mapProfileLookupError(err)
+	}
+
+	items := make([]*api.PromptHistoryItem, 0, len(out.Items))
+	for _, item := range out.Items {
+		items = append(items, &api.PromptHistoryItem{
+			Id:        item.ID,
+			Prompt:    item.Prompt,
+			Category:  item.Category,
+			CreatedAt: item.CreatedAt,
+		})
+	}
+
+	return &api.GetPromptHistoryResponse{Items: items}, nil
+}
+
+func mapProfileLookupError(err error) error {
+	switch {
+	case errors.Is(err, ucModels.ErrProfileNotFound):
+		return status.Error(codes.NotFound, fmt.Sprintf("%s: %s", errorcodes.ProfileNotFound, ucModels.ErrProfileNotFound.Error()))
+	case errors.Is(err, ucModels.ErrInvalidInput):
+		return status.Error(codes.InvalidArgument, fmt.Sprintf("%s: %s", errorcodes.InvalidArgument, err.Error()))
+	default:
+		return status.Error(codes.Internal, fmt.Sprintf("%s: %s", errorcodes.Internal, ucModels.ErrInternalServerError.Error()))
+	}
 }

@@ -51,3 +51,75 @@ type ProfileUser struct {
 	Username   string
 	Verified   bool
 }
+
+type GetWalletOutput struct {
+	Wallet       WalletView
+	Transactions []WalletTransactionView
+}
+
+type WalletView struct {
+	ID               int64
+	ProfileID        int64
+	Balance          int64
+	TotalEarned      int64
+	BalanceAvailable int64
+}
+
+type WalletTransactionView struct {
+	ID          int64
+	Date        string
+	Type        string
+	Amount      int64
+	Status      string
+	Description string
+}
+
+type GetReferralsOutput struct {
+	Items []ReferralView
+}
+
+type ReferralView struct {
+	ID                  int64
+	TelegramID          string
+	Name                string
+	Username            string
+	CompletedTasksCount int64
+	Earnings            int64
+}
+
+type SavePromptHistoryInput struct {
+	TelegramID string
+	Prompt     string
+	Category   string
+}
+
+func (i *SavePromptHistoryInput) Validate() error {
+	if i.TelegramID == "" {
+		return fmt.Errorf("%w: telegram_id is required", ErrInvalidInput)
+	}
+	if i.Prompt == "" {
+		return fmt.Errorf("%w: prompt is required", ErrInvalidInput)
+	}
+	if len(i.Prompt) > 4000 {
+		return fmt.Errorf("%w: prompt too long", ErrInvalidInput)
+	}
+	if len(i.Category) > 100 {
+		return fmt.Errorf("%w: category too long", ErrInvalidInput)
+	}
+	return nil
+}
+
+type SavePromptHistoryOutput struct {
+	Item PromptHistoryItem
+}
+
+type GetPromptHistoryOutput struct {
+	Items []PromptHistoryItem
+}
+
+type PromptHistoryItem struct {
+	ID        int64
+	Prompt    string
+	Category  string
+	CreatedAt string
+}

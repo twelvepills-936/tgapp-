@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	repoModels "gitlab16.skiftrade.kz/templates/go/internal/repository/models"
@@ -106,13 +107,8 @@ func (uc *useCase) RegisterByTelegram(ctx context.Context, input ucModels.Regist
 }
 
 func (uc *useCase) GetUserByTelegramID(ctx context.Context, telegramID string) (ucModels.GetProfileOutput, error) {
-	// Validate telegram_id
-	if telegramID == "" {
-		return ucModels.GetProfileOutput{}, fmt.Errorf("telegram_id is required")
-	}
-
-	if len(telegramID) > 100 {
-		return ucModels.GetProfileOutput{}, fmt.Errorf("telegram_id too long")
+	if err := validateTelegramID(telegramID); err != nil {
+		return ucModels.GetProfileOutput{}, err
 	}
 
 	p, err := uc.repo.GetProfileByTelegramID(ctx, nil, telegramID)
@@ -130,6 +126,162 @@ func (uc *useCase) GetUserByTelegramID(ctx context.Context, telegramID string) (
 		Username:   p.Username,
 		Verified:   p.Verified,
 	}}, nil
+}
+
+func (uc *useCase) GetWalletByTelegramID(ctx context.Context, telegramID string) (ucModels.GetWalletOutput, error) {
+	if err := validateTelegramID(telegramID); err != nil {
+		return ucModels.GetWalletOutput{}, err
+	}
+
+	wallet, err := uc.repo.GetWalletByTelegramID(ctx, nil, telegramID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ucModels.GetWalletOutput{}, ucModels.ErrProfileNotFound
+		}
+		return ucModels.GetWalletOutput{}, err
+	}
+
+	transactions, err := uc.repo.ListWalletTransactionsByTelegramID(ctx, nil, telegramID, 20)
+	if err != nil {
+		return ucModels.GetWalletOutput{}, err
+	}
+
+	items := make([]ucModels.WalletTransactionView, 0, len(transactions))
+	for _, item := range transactions {
+		items = append(items, ucModels.WalletTransactionView{
+			ID:          item.ID,
+			Date:        item.Date.Format("2006-01-02 15:04"),
+			Type:        item.Type,
+			Amount:      item.Amount,
+			Status:      item.Status,
+			Description: item.Description,
+		})
+	}
+
+	return ucModels.GetWalletOutput{
+		Wallet: ucModels.WalletView{
+			ID:               wallet.ID,
+			ProfileID:        wallet.ProfileID,
+			Balance:          wallet.Balance,
+			TotalEarned:      wallet.TotalEarned,
+			BalanceAvailable: wallet.BalanceAvailable,
+		},
+		Transactions: items,
+	}, nil
+}
+
+func (uc *useCase) GetReferralsByTelegramID(ctx context.Context, telegramID string) (ucModels.GetReferralsOutput, error) {
+	if err := validateTelegramID(telegramID); err != nil {
+		return ucModels.GetReferralsOutput{}, err
+	}
+
+	if _, err := uc.repo.GetProfileByTelegramID(ctx, nil, telegramID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ucModels.GetReferralsOutput{}, ucModels.ErrProfileNotFound
+		}
+		return ucModels.GetReferralsOutput{}, err
+	}
+
+	items, err := uc.repo.ListReferralsByTelegramID(ctx, nil, telegramID)
+	if err != nil {
+		return ucModels.GetReferralsOutput{}, err
+	}
+
+	result := make([]ucModels.ReferralView, 0, len(items))
+	for _, item := range items {
+		result = append(result, ucModels.ReferralView{
+			ID:                  item.ID,
+			TelegramID:          item.TelegramID,
+			Name:                item.Name,
+			Username:            item.Username,
+			CompletedTasksCount: item.CompletedTasksCount,
+			Earnings:            item.Earnings,
+		})
+	}
+
+	return ucModels.GetReferralsOutput{Items: result}, nil
+}
+
+func (uc *useCase) SavePromptHistory(ctx context.Context, input ucModels.SavePromptHistoryInput) (ucModels.SavePromptHistoryOutput, error) {
+	if err := input.Validate(); err != nil {
+		return ucModels.SavePromptHistoryOutput{}, err
+	}
+
+	profile, err := uc.repo.GetProfileByTelegramID(ctx, nil, input.TelegramID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ucModels.SavePromptHistoryOutput{}, ucModels.ErrProfileNotFound
+		}
+		return ucModels.SavePromptHistoryOutput{}, err
+	}
+
+	category := input.Category
+	if category == "" {
+		category = "general"
+	}
+
+	item := repoModels.PromptHistory{
+		ProfileID:  profile.ID,
+		TelegramID: input.TelegramID,
+		Prompt:     input.Prompt,
+		Category:   category,
+	}
+
+	id, err := uc.repo.CreatePromptHistory(ctx, nil, item)
+	if err != nil {
+		return ucModels.SavePromptHistoryOutput{}, err
+	}
+
+	item.ID = id
+	item.CreatedAt = time.Now()
+
+	return ucModels.SavePromptHistoryOutput{Item: mapPromptHistoryItem(item)}, nil
+}
+
+func (uc *useCase) GetPromptHistoryByTelegramID(ctx context.Context, telegramID string) (ucModels.GetPromptHistoryOutput, error) {
+	if err := validateTelegramID(telegramID); err != nil {
+		return ucModels.GetPromptHistoryOutput{}, err
+	}
+
+	if _, err := uc.repo.GetProfileByTelegramID(ctx, nil, telegramID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ucModels.GetPromptHistoryOutput{}, ucModels.ErrProfileNotFound
+		}
+		return ucModels.GetPromptHistoryOutput{}, err
+	}
+
+	items, err := uc.repo.ListPromptHistoryByTelegramID(ctx, nil, telegramID, 50)
+	if err != nil {
+		return ucModels.GetPromptHistoryOutput{}, err
+	}
+
+	result := make([]ucModels.PromptHistoryItem, 0, len(items))
+	for _, item := range items {
+		result = append(result, mapPromptHistoryItem(item))
+	}
+
+	return ucModels.GetPromptHistoryOutput{Items: result}, nil
+}
+
+func validateTelegramID(telegramID string) error {
+	if telegramID == "" {
+		return fmt.Errorf("telegram_id is required")
+	}
+
+	if len(telegramID) > 100 {
+		return fmt.Errorf("telegram_id too long")
+	}
+
+	return nil
+}
+
+func mapPromptHistoryItem(item repoModels.PromptHistory) ucModels.PromptHistoryItem {
+	return ucModels.PromptHistoryItem{
+		ID:        item.ID,
+		Prompt:    item.Prompt,
+		Category:  item.Category,
+		CreatedAt: item.CreatedAt.Format("2006-01-02 15:04"),
+	}
 }
 
 // helpers

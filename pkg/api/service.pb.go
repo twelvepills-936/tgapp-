@@ -224,6 +224,318 @@ func (x *RegisterByTelegramResponse) GetProfileId() int64 {
 	return 0
 }
 
+type WalletData struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Id               int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProfileId        int64                  `protobuf:"varint,2,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
+	Balance          int64                  `protobuf:"varint,3,opt,name=balance,proto3" json:"balance,omitempty"`
+	TotalEarned      int64                  `protobuf:"varint,4,opt,name=total_earned,json=totalEarned,proto3" json:"total_earned,omitempty"`
+	BalanceAvailable int64                  `protobuf:"varint,5,opt,name=balance_available,json=balanceAvailable,proto3" json:"balance_available,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *WalletData) Reset() {
+	*x = WalletData{}
+	mi := &file_service_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WalletData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WalletData) ProtoMessage() {}
+
+func (x *WalletData) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WalletData.ProtoReflect.Descriptor instead.
+func (*WalletData) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *WalletData) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *WalletData) GetProfileId() int64 {
+	if x != nil {
+		return x.ProfileId
+	}
+	return 0
+}
+
+func (x *WalletData) GetBalance() int64 {
+	if x != nil {
+		return x.Balance
+	}
+	return 0
+}
+
+func (x *WalletData) GetTotalEarned() int64 {
+	if x != nil {
+		return x.TotalEarned
+	}
+	return 0
+}
+
+func (x *WalletData) GetBalanceAvailable() int64 {
+	if x != nil {
+		return x.BalanceAvailable
+	}
+	return 0
+}
+
+type WalletTransactionItem struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Date          string                 `protobuf:"bytes,2,opt,name=date,proto3" json:"date,omitempty"`
+	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	Amount        int64                  `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
+	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	Description   string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WalletTransactionItem) Reset() {
+	*x = WalletTransactionItem{}
+	mi := &file_service_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WalletTransactionItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WalletTransactionItem) ProtoMessage() {}
+
+func (x *WalletTransactionItem) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WalletTransactionItem.ProtoReflect.Descriptor instead.
+func (*WalletTransactionItem) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *WalletTransactionItem) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *WalletTransactionItem) GetDate() string {
+	if x != nil {
+		return x.Date
+	}
+	return ""
+}
+
+func (x *WalletTransactionItem) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *WalletTransactionItem) GetAmount() int64 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+func (x *WalletTransactionItem) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *WalletTransactionItem) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+type ReferralItem struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Id                  int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	TelegramId          string                 `protobuf:"bytes,2,opt,name=telegram_id,json=telegramId,proto3" json:"telegram_id,omitempty"`
+	Name                string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Username            string                 `protobuf:"bytes,4,opt,name=username,proto3" json:"username,omitempty"`
+	CompletedTasksCount int64                  `protobuf:"varint,5,opt,name=completed_tasks_count,json=completedTasksCount,proto3" json:"completed_tasks_count,omitempty"`
+	Earnings            int64                  `protobuf:"varint,6,opt,name=earnings,proto3" json:"earnings,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *ReferralItem) Reset() {
+	*x = ReferralItem{}
+	mi := &file_service_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReferralItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReferralItem) ProtoMessage() {}
+
+func (x *ReferralItem) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReferralItem.ProtoReflect.Descriptor instead.
+func (*ReferralItem) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ReferralItem) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ReferralItem) GetTelegramId() string {
+	if x != nil {
+		return x.TelegramId
+	}
+	return ""
+}
+
+func (x *ReferralItem) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ReferralItem) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *ReferralItem) GetCompletedTasksCount() int64 {
+	if x != nil {
+		return x.CompletedTasksCount
+	}
+	return 0
+}
+
+func (x *ReferralItem) GetEarnings() int64 {
+	if x != nil {
+		return x.Earnings
+	}
+	return 0
+}
+
+type PromptHistoryItem struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Prompt        string                 `protobuf:"bytes,2,opt,name=prompt,proto3" json:"prompt,omitempty"`
+	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PromptHistoryItem) Reset() {
+	*x = PromptHistoryItem{}
+	mi := &file_service_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PromptHistoryItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PromptHistoryItem) ProtoMessage() {}
+
+func (x *PromptHistoryItem) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PromptHistoryItem.ProtoReflect.Descriptor instead.
+func (*PromptHistoryItem) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *PromptHistoryItem) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *PromptHistoryItem) GetPrompt() string {
+	if x != nil {
+		return x.Prompt
+	}
+	return ""
+}
+
+func (x *PromptHistoryItem) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *PromptHistoryItem) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
 type GetUserByTelegramIdRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TelegramId    string                 `protobuf:"bytes,1,opt,name=telegram_id,json=telegramId,proto3" json:"telegram_id,omitempty"`
@@ -233,7 +545,7 @@ type GetUserByTelegramIdRequest struct {
 
 func (x *GetUserByTelegramIdRequest) Reset() {
 	*x = GetUserByTelegramIdRequest{}
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -245,7 +557,7 @@ func (x *GetUserByTelegramIdRequest) String() string {
 func (*GetUserByTelegramIdRequest) ProtoMessage() {}
 
 func (x *GetUserByTelegramIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -258,7 +570,7 @@ func (x *GetUserByTelegramIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserByTelegramIdRequest.ProtoReflect.Descriptor instead.
 func (*GetUserByTelegramIdRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{4}
+	return file_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetUserByTelegramIdRequest) GetTelegramId() string {
@@ -266,6 +578,382 @@ func (x *GetUserByTelegramIdRequest) GetTelegramId() string {
 		return x.TelegramId
 	}
 	return ""
+}
+
+type GetWalletByTelegramIdRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TelegramId    string                 `protobuf:"bytes,1,opt,name=telegram_id,json=telegramId,proto3" json:"telegram_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetWalletByTelegramIdRequest) Reset() {
+	*x = GetWalletByTelegramIdRequest{}
+	mi := &file_service_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetWalletByTelegramIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetWalletByTelegramIdRequest) ProtoMessage() {}
+
+func (x *GetWalletByTelegramIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetWalletByTelegramIdRequest.ProtoReflect.Descriptor instead.
+func (*GetWalletByTelegramIdRequest) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetWalletByTelegramIdRequest) GetTelegramId() string {
+	if x != nil {
+		return x.TelegramId
+	}
+	return ""
+}
+
+type GetReferralsByTelegramIdRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TelegramId    string                 `protobuf:"bytes,1,opt,name=telegram_id,json=telegramId,proto3" json:"telegram_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetReferralsByTelegramIdRequest) Reset() {
+	*x = GetReferralsByTelegramIdRequest{}
+	mi := &file_service_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetReferralsByTelegramIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetReferralsByTelegramIdRequest) ProtoMessage() {}
+
+func (x *GetReferralsByTelegramIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetReferralsByTelegramIdRequest.ProtoReflect.Descriptor instead.
+func (*GetReferralsByTelegramIdRequest) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetReferralsByTelegramIdRequest) GetTelegramId() string {
+	if x != nil {
+		return x.TelegramId
+	}
+	return ""
+}
+
+type CreatePromptHistoryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TelegramId    string                 `protobuf:"bytes,1,opt,name=telegram_id,json=telegramId,proto3" json:"telegram_id,omitempty"`
+	Prompt        string                 `protobuf:"bytes,2,opt,name=prompt,proto3" json:"prompt,omitempty"`
+	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreatePromptHistoryRequest) Reset() {
+	*x = CreatePromptHistoryRequest{}
+	mi := &file_service_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreatePromptHistoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreatePromptHistoryRequest) ProtoMessage() {}
+
+func (x *CreatePromptHistoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreatePromptHistoryRequest.ProtoReflect.Descriptor instead.
+func (*CreatePromptHistoryRequest) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CreatePromptHistoryRequest) GetTelegramId() string {
+	if x != nil {
+		return x.TelegramId
+	}
+	return ""
+}
+
+func (x *CreatePromptHistoryRequest) GetPrompt() string {
+	if x != nil {
+		return x.Prompt
+	}
+	return ""
+}
+
+func (x *CreatePromptHistoryRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+type GetPromptHistoryByTelegramIdRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TelegramId    string                 `protobuf:"bytes,1,opt,name=telegram_id,json=telegramId,proto3" json:"telegram_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPromptHistoryByTelegramIdRequest) Reset() {
+	*x = GetPromptHistoryByTelegramIdRequest{}
+	mi := &file_service_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPromptHistoryByTelegramIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPromptHistoryByTelegramIdRequest) ProtoMessage() {}
+
+func (x *GetPromptHistoryByTelegramIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPromptHistoryByTelegramIdRequest.ProtoReflect.Descriptor instead.
+func (*GetPromptHistoryByTelegramIdRequest) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetPromptHistoryByTelegramIdRequest) GetTelegramId() string {
+	if x != nil {
+		return x.TelegramId
+	}
+	return ""
+}
+
+type GetWalletResponse struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Wallet        *WalletData              `protobuf:"bytes,1,opt,name=wallet,proto3" json:"wallet,omitempty"`
+	Transactions  []*WalletTransactionItem `protobuf:"bytes,2,rep,name=transactions,proto3" json:"transactions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetWalletResponse) Reset() {
+	*x = GetWalletResponse{}
+	mi := &file_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetWalletResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetWalletResponse) ProtoMessage() {}
+
+func (x *GetWalletResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetWalletResponse.ProtoReflect.Descriptor instead.
+func (*GetWalletResponse) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetWalletResponse) GetWallet() *WalletData {
+	if x != nil {
+		return x.Wallet
+	}
+	return nil
+}
+
+func (x *GetWalletResponse) GetTransactions() []*WalletTransactionItem {
+	if x != nil {
+		return x.Transactions
+	}
+	return nil
+}
+
+type GetReferralsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Items         []*ReferralItem        `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetReferralsResponse) Reset() {
+	*x = GetReferralsResponse{}
+	mi := &file_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetReferralsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetReferralsResponse) ProtoMessage() {}
+
+func (x *GetReferralsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetReferralsResponse.ProtoReflect.Descriptor instead.
+func (*GetReferralsResponse) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetReferralsResponse) GetItems() []*ReferralItem {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+type CreatePromptHistoryResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Item          *PromptHistoryItem     `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreatePromptHistoryResponse) Reset() {
+	*x = CreatePromptHistoryResponse{}
+	mi := &file_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreatePromptHistoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreatePromptHistoryResponse) ProtoMessage() {}
+
+func (x *CreatePromptHistoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreatePromptHistoryResponse.ProtoReflect.Descriptor instead.
+func (*CreatePromptHistoryResponse) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *CreatePromptHistoryResponse) GetItem() *PromptHistoryItem {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+type GetPromptHistoryResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Items         []*PromptHistoryItem   `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPromptHistoryResponse) Reset() {
+	*x = GetPromptHistoryResponse{}
+	mi := &file_service_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPromptHistoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPromptHistoryResponse) ProtoMessage() {}
+
+func (x *GetPromptHistoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPromptHistoryResponse.ProtoReflect.Descriptor instead.
+func (*GetPromptHistoryResponse) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *GetPromptHistoryResponse) GetItems() []*PromptHistoryItem {
+	if x != nil {
+		return x.Items
+	}
+	return nil
 }
 
 var File_service_proto protoreflect.FileDescriptor
@@ -285,13 +973,70 @@ const file_service_proto_rawDesc = "" +
 	"startParam\";\n" +
 	"\x1aRegisterByTelegramResponse\x12\x1d\n" +
 	"\n" +
-	"profile_id\x18\x01 \x01(\x03R\tprofileId\"B\n" +
+	"profile_id\x18\x01 \x01(\x03R\tprofileId\"\xa5\x01\n" +
+	"\n" +
+	"WalletData\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\n" +
+	"profile_id\x18\x02 \x01(\x03R\tprofileId\x12\x18\n" +
+	"\abalance\x18\x03 \x01(\x03R\abalance\x12!\n" +
+	"\ftotal_earned\x18\x04 \x01(\x03R\vtotalEarned\x12+\n" +
+	"\x11balance_available\x18\x05 \x01(\x03R\x10balanceAvailable\"\xa1\x01\n" +
+	"\x15WalletTransactionItem\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
+	"\x04date\x18\x02 \x01(\tR\x04date\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x16\n" +
+	"\x06amount\x18\x04 \x01(\x03R\x06amount\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12 \n" +
+	"\vdescription\x18\x06 \x01(\tR\vdescription\"\xbf\x01\n" +
+	"\fReferralItem\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
+	"\vtelegram_id\x18\x02 \x01(\tR\n" +
+	"telegramId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1a\n" +
+	"\busername\x18\x04 \x01(\tR\busername\x122\n" +
+	"\x15completed_tasks_count\x18\x05 \x01(\x03R\x13completedTasksCount\x12\x1a\n" +
+	"\bearnings\x18\x06 \x01(\x03R\bearnings\"v\n" +
+	"\x11PromptHistoryItem\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06prompt\x18\x02 \x01(\tR\x06prompt\x12\x1a\n" +
+	"\bcategory\x18\x03 \x01(\tR\bcategory\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x04 \x01(\tR\tcreatedAt\"B\n" +
 	"\x1aGetUserByTelegramIdRequest\x12$\n" +
 	"\vtelegram_id\x18\x01 \x01(\tB\x03\xe0A\x02R\n" +
-	"telegramId2\x9d\x03\n" +
+	"telegramId\"D\n" +
+	"\x1cGetWalletByTelegramIdRequest\x12$\n" +
+	"\vtelegram_id\x18\x01 \x01(\tB\x03\xe0A\x02R\n" +
+	"telegramId\"G\n" +
+	"\x1fGetReferralsByTelegramIdRequest\x12$\n" +
+	"\vtelegram_id\x18\x01 \x01(\tB\x03\xe0A\x02R\n" +
+	"telegramId\"{\n" +
+	"\x1aCreatePromptHistoryRequest\x12$\n" +
+	"\vtelegram_id\x18\x01 \x01(\tB\x03\xe0A\x02R\n" +
+	"telegramId\x12\x1b\n" +
+	"\x06prompt\x18\x02 \x01(\tB\x03\xe0A\x02R\x06prompt\x12\x1a\n" +
+	"\bcategory\x18\x03 \x01(\tR\bcategory\"K\n" +
+	"#GetPromptHistoryByTelegramIdRequest\x12$\n" +
+	"\vtelegram_id\x18\x01 \x01(\tB\x03\xe0A\x02R\n" +
+	"telegramId\"\x92\x01\n" +
+	"\x11GetWalletResponse\x122\n" +
+	"\x06wallet\x18\x01 \x01(\v2\x1a.api.gotemplate.WalletDataR\x06wallet\x12I\n" +
+	"\ftransactions\x18\x02 \x03(\v2%.api.gotemplate.WalletTransactionItemR\ftransactions\"J\n" +
+	"\x14GetReferralsResponse\x122\n" +
+	"\x05items\x18\x01 \x03(\v2\x1c.api.gotemplate.ReferralItemR\x05items\"T\n" +
+	"\x1bCreatePromptHistoryResponse\x125\n" +
+	"\x04item\x18\x01 \x01(\v2!.api.gotemplate.PromptHistoryItemR\x04item\"S\n" +
+	"\x18GetPromptHistoryResponse\x127\n" +
+	"\x05items\x18\x01 \x03(\v2!.api.gotemplate.PromptHistoryItemR\x05items2\xaf\n" +
+	"\n" +
 	"\tCyberMate\x12\xc7\x01\n" +
 	"\x12RegisterByTelegram\x12).api.gotemplate.RegisterByTelegramRequest\x1a*.api.gotemplate.RegisterByTelegramResponse\"Z\x92A@\x12\x12RegisterByTelegram\x1a*Register user by Telegram WebApp init data\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/v1/register\x12\xc5\x01\n" +
-	"\x13GetUserByTelegramId\x12*.api.gotemplate.GetUserByTelegramIdRequest\x1a\x1f.api.gotemplate.GetUserResponse\"a\x92A6\x12\x13GetUserByTelegramId\x1a\x1fGet user profile by telegram id\x82\xd3\xe4\x93\x02\"\x12 /v1/users/telegram/{telegram_id}BN\x92A\x18\x12\x16\n" +
+	"\x13GetUserByTelegramId\x12*.api.gotemplate.GetUserByTelegramIdRequest\x1a\x1f.api.gotemplate.GetUserResponse\"a\x92A6\x12\x13GetUserByTelegramId\x1a\x1fGet user profile by telegram id\x82\xd3\xe4\x93\x02\"\x12 /v1/users/telegram/{telegram_id}\x12\xe8\x01\n" +
+	"\x15GetWalletByTelegramId\x12,.api.gotemplate.GetWalletByTelegramIdRequest\x1a!.api.gotemplate.GetWalletResponse\"~\x92AR\x12\x15GetWalletByTelegramId\x1a9Get wallet summary and recent transactions by telegram id\x82\xd3\xe4\x93\x02#\x12!/v1/wallet/telegram/{telegram_id}\x12\xda\x01\n" +
+	"\x18GetReferralsByTelegramId\x12/.api.gotemplate.GetReferralsByTelegramIdRequest\x1a$.api.gotemplate.GetReferralsResponse\"g\x92A8\x12\x18GetReferralsByTelegramId\x1a\x1cGet referrals by telegram id\x82\xd3\xe4\x93\x02&\x12$/v1/referrals/telegram/{telegram_id}\x12\xcf\x01\n" +
+	"\x13CreatePromptHistory\x12*.api.gotemplate.CreatePromptHistoryRequest\x1a+.api.gotemplate.CreatePromptHistoryResponse\"_\x92A>\x12\x13CreatePromptHistory\x1a'Save prompt history for a Telegram user\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/prompts/history\x12\xf5\x01\n" +
+	"\x1cGetPromptHistoryByTelegramId\x123.api.gotemplate.GetPromptHistoryByTelegramIdRequest\x1a(.api.gotemplate.GetPromptHistoryResponse\"v\x92AA\x12\x1cGetPromptHistoryByTelegramId\x1a!Get prompt history by telegram id\x82\xd3\xe4\x93\x02,\x12*/v1/prompts/history/telegram/{telegram_id}BN\x92A\x18\x12\x16\n" +
 	"\rCyberMate API2\x051.0.0Z1gitlab16.skiftrade.kz/templates/go/api;gotemplateb\x06proto3"
 
 var (
@@ -306,25 +1051,50 @@ func file_service_proto_rawDescGZIP() []byte {
 	return file_service_proto_rawDescData
 }
 
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_service_proto_goTypes = []any{
-	(*GetUserResponse)(nil),            // 0: api.gotemplate.GetUserResponse
-	(*User)(nil),                       // 1: api.gotemplate.User
-	(*RegisterByTelegramRequest)(nil),  // 2: api.gotemplate.RegisterByTelegramRequest
-	(*RegisterByTelegramResponse)(nil), // 3: api.gotemplate.RegisterByTelegramResponse
-	(*GetUserByTelegramIdRequest)(nil), // 4: api.gotemplate.GetUserByTelegramIdRequest
+	(*GetUserResponse)(nil),                     // 0: api.gotemplate.GetUserResponse
+	(*User)(nil),                                // 1: api.gotemplate.User
+	(*RegisterByTelegramRequest)(nil),           // 2: api.gotemplate.RegisterByTelegramRequest
+	(*RegisterByTelegramResponse)(nil),          // 3: api.gotemplate.RegisterByTelegramResponse
+	(*WalletData)(nil),                          // 4: api.gotemplate.WalletData
+	(*WalletTransactionItem)(nil),               // 5: api.gotemplate.WalletTransactionItem
+	(*ReferralItem)(nil),                        // 6: api.gotemplate.ReferralItem
+	(*PromptHistoryItem)(nil),                   // 7: api.gotemplate.PromptHistoryItem
+	(*GetUserByTelegramIdRequest)(nil),          // 8: api.gotemplate.GetUserByTelegramIdRequest
+	(*GetWalletByTelegramIdRequest)(nil),        // 9: api.gotemplate.GetWalletByTelegramIdRequest
+	(*GetReferralsByTelegramIdRequest)(nil),     // 10: api.gotemplate.GetReferralsByTelegramIdRequest
+	(*CreatePromptHistoryRequest)(nil),          // 11: api.gotemplate.CreatePromptHistoryRequest
+	(*GetPromptHistoryByTelegramIdRequest)(nil), // 12: api.gotemplate.GetPromptHistoryByTelegramIdRequest
+	(*GetWalletResponse)(nil),                   // 13: api.gotemplate.GetWalletResponse
+	(*GetReferralsResponse)(nil),                // 14: api.gotemplate.GetReferralsResponse
+	(*CreatePromptHistoryResponse)(nil),         // 15: api.gotemplate.CreatePromptHistoryResponse
+	(*GetPromptHistoryResponse)(nil),            // 16: api.gotemplate.GetPromptHistoryResponse
 }
 var file_service_proto_depIdxs = []int32{
-	1, // 0: api.gotemplate.GetUserResponse.data:type_name -> api.gotemplate.User
-	2, // 1: api.gotemplate.CyberMate.RegisterByTelegram:input_type -> api.gotemplate.RegisterByTelegramRequest
-	4, // 2: api.gotemplate.CyberMate.GetUserByTelegramId:input_type -> api.gotemplate.GetUserByTelegramIdRequest
-	3, // 3: api.gotemplate.CyberMate.RegisterByTelegram:output_type -> api.gotemplate.RegisterByTelegramResponse
-	0, // 4: api.gotemplate.CyberMate.GetUserByTelegramId:output_type -> api.gotemplate.GetUserResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	1,  // 0: api.gotemplate.GetUserResponse.data:type_name -> api.gotemplate.User
+	4,  // 1: api.gotemplate.GetWalletResponse.wallet:type_name -> api.gotemplate.WalletData
+	5,  // 2: api.gotemplate.GetWalletResponse.transactions:type_name -> api.gotemplate.WalletTransactionItem
+	6,  // 3: api.gotemplate.GetReferralsResponse.items:type_name -> api.gotemplate.ReferralItem
+	7,  // 4: api.gotemplate.CreatePromptHistoryResponse.item:type_name -> api.gotemplate.PromptHistoryItem
+	7,  // 5: api.gotemplate.GetPromptHistoryResponse.items:type_name -> api.gotemplate.PromptHistoryItem
+	2,  // 6: api.gotemplate.CyberMate.RegisterByTelegram:input_type -> api.gotemplate.RegisterByTelegramRequest
+	8,  // 7: api.gotemplate.CyberMate.GetUserByTelegramId:input_type -> api.gotemplate.GetUserByTelegramIdRequest
+	9,  // 8: api.gotemplate.CyberMate.GetWalletByTelegramId:input_type -> api.gotemplate.GetWalletByTelegramIdRequest
+	10, // 9: api.gotemplate.CyberMate.GetReferralsByTelegramId:input_type -> api.gotemplate.GetReferralsByTelegramIdRequest
+	11, // 10: api.gotemplate.CyberMate.CreatePromptHistory:input_type -> api.gotemplate.CreatePromptHistoryRequest
+	12, // 11: api.gotemplate.CyberMate.GetPromptHistoryByTelegramId:input_type -> api.gotemplate.GetPromptHistoryByTelegramIdRequest
+	3,  // 12: api.gotemplate.CyberMate.RegisterByTelegram:output_type -> api.gotemplate.RegisterByTelegramResponse
+	0,  // 13: api.gotemplate.CyberMate.GetUserByTelegramId:output_type -> api.gotemplate.GetUserResponse
+	13, // 14: api.gotemplate.CyberMate.GetWalletByTelegramId:output_type -> api.gotemplate.GetWalletResponse
+	14, // 15: api.gotemplate.CyberMate.GetReferralsByTelegramId:output_type -> api.gotemplate.GetReferralsResponse
+	15, // 16: api.gotemplate.CyberMate.CreatePromptHistory:output_type -> api.gotemplate.CreatePromptHistoryResponse
+	16, // 17: api.gotemplate.CyberMate.GetPromptHistoryByTelegramId:output_type -> api.gotemplate.GetPromptHistoryResponse
+	12, // [12:18] is the sub-list for method output_type
+	6,  // [6:12] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_service_proto_init() }
@@ -338,7 +1108,7 @@ func file_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

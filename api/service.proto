@@ -38,6 +38,51 @@ service CyberMate {
       description: "Get user profile by telegram id"
     };
   }
+
+  // Returns wallet summary and recent transactions.
+  rpc GetWalletByTelegramId (GetWalletByTelegramIdRequest) returns (GetWalletResponse) {
+    option (google.api.http) = {
+      get: "/v1/wallet/telegram/{telegram_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "GetWalletByTelegramId"
+      description: "Get wallet summary and recent transactions by telegram id"
+    };
+  }
+
+  // Returns the referral list for the current user.
+  rpc GetReferralsByTelegramId (GetReferralsByTelegramIdRequest) returns (GetReferralsResponse) {
+    option (google.api.http) = {
+      get: "/v1/referrals/telegram/{telegram_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "GetReferralsByTelegramId"
+      description: "Get referrals by telegram id"
+    };
+  }
+
+  // Saves a prompt to the current user's history.
+  rpc CreatePromptHistory (CreatePromptHistoryRequest) returns (CreatePromptHistoryResponse) {
+    option (google.api.http) = {
+      post: "/v1/prompts/history"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "CreatePromptHistory"
+      description: "Save prompt history for a Telegram user"
+    };
+  }
+
+  // Returns saved prompt history for the current user.
+  rpc GetPromptHistoryByTelegramId (GetPromptHistoryByTelegramIdRequest) returns (GetPromptHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v1/prompts/history/telegram/{telegram_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "GetPromptHistoryByTelegramId"
+      description: "Get prompt history by telegram id"
+    };
+  }
 }
 
 message GetUserResponse {
@@ -60,6 +105,74 @@ message RegisterByTelegramResponse {
   int64 profile_id = 1;
 }
 
+message WalletData {
+  int64 id = 1;
+  int64 profile_id = 2;
+  int64 balance = 3;
+  int64 total_earned = 4;
+  int64 balance_available = 5;
+}
+
+message WalletTransactionItem {
+  int64 id = 1;
+  string date = 2;
+  string type = 3;
+  int64 amount = 4;
+  string status = 5;
+  string description = 6;
+}
+
+message ReferralItem {
+  int64 id = 1;
+  string telegram_id = 2;
+  string name = 3;
+  string username = 4;
+  int64 completed_tasks_count = 5;
+  int64 earnings = 6;
+}
+
+message PromptHistoryItem {
+  int64 id = 1;
+  string prompt = 2;
+  string category = 3;
+  string created_at = 4;
+}
+
 message GetUserByTelegramIdRequest {
   string telegram_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetWalletByTelegramIdRequest {
+  string telegram_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetReferralsByTelegramIdRequest {
+  string telegram_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message CreatePromptHistoryRequest {
+  string telegram_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string prompt = 2 [(google.api.field_behavior) = REQUIRED];
+  string category = 3;
+}
+
+message GetPromptHistoryByTelegramIdRequest {
+  string telegram_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetWalletResponse {
+  WalletData wallet = 1;
+  repeated WalletTransactionItem transactions = 2;
+}
+
+message GetReferralsResponse {
+  repeated ReferralItem items = 1;
+}
+
+message CreatePromptHistoryResponse {
+  PromptHistoryItem item = 1;
+}
+
+message GetPromptHistoryResponse {
+  repeated PromptHistoryItem items = 1;
 }

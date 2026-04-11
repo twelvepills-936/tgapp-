@@ -57,3 +57,145 @@ func (r *Repository) AddReferral(ctx context.Context, tx pgx.Tx, referrerProfile
 	_, err := qry.Exec(ctx, q, referrerProfileID, refereeProfileID)
 	return err
 }
+
+// GetWalletByTelegramID returns wallet data for a profile by telegram id.
+func (r *Repository) GetWalletByTelegramID(ctx context.Context, tx pgx.Tx, telegramID string) (repoModels.Wallet, error) {
+	const q = `
+SELECT COALESCE(w.id, 0), p.id, COALESCE(w.balance, 0), COALESCE(w.total_earned, 0), COALESCE(w.balance_available, 0)
+FROM profiles p
+LEFT JOIN wallets w ON w.profile_id = p.id
+WHERE p.telegram_id = $1
+LIMIT 1`
+
+	var w repoModels.Wallet
+	qry := r.getQueryable(tx)
+	err := qry.QueryRow(ctx, q, telegramID).Scan(&w.ID, &w.ProfileID, &w.Balance, &w.TotalEarned, &w.BalanceAvailable)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return w, pgx.ErrNoRows
+		}
+		slog.ErrorContext(ctx, "failed to get wallet", slog.Any("error", err), slog.String("telegram_id", telegramID))
+		return w, err
+	}
+	return w, nil
+}
+
+// ListWalletTransactionsByTelegramID returns recent wallet transactions for a profile.
+func (r *Repository) ListWalletTransactionsByTelegramID(ctx context.Context, tx pgx.Tx, telegramID string, limit int32) ([]repoModels.WalletTransaction, error) {
+	const q = `
+SELECT wt.id, wt.wallet_id, wt.date, wt.type, wt.amount, wt.status, COALESCE(wt.description, ''), COALESCE(wt.details, '')
+FROM profiles p
+JOIN wallets w ON w.profile_id = p.id
+JOIN wallet_transactions wt ON wt.wallet_id = w.id
+WHERE p.telegram_id = $1
+ORDER BY wt.date DESC, wt.id DESC
+LIMIT $2`
+
+	qry := r.getQueryable(tx)
+	rows, err := qry.Query(ctx, q, telegramID, limit)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to list wallet transactions", slog.Any("error", err), slog.String("telegram_id", telegramID))
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]repoModels.WalletTransaction, 0)
+	for rows.Next() {
+		var item repoModels.WalletTransaction
+		if scanErr := rows.Scan(&item.ID, &item.WalletID, &item.Date, &item.Type, &item.Amount, &item.Status, &item.Description, &item.Details); scanErr != nil {
+			return nil, scanErr
+		}
+		items = append(items, item)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return items, nil
+}
+
+// ListReferralsByTelegramID returns referrals made by the specified profile.
+func (r *Repository) ListReferralsByTelegramID(ctx context.Context, tx pgx.Tx, telegramID string) ([]repoModels.Referral, error) {
+	const q = `
+SELECT r.id, referee.telegram_id, referee.name, COALESCE(referee.username, ''), r.completed_tasks_count, r.earnings
+FROM profiles owner
+JOIN referrals r ON r.referrer_profile_id = owner.id
+JOIN profiles referee ON referee.id = r.referee_profile_id
+WHERE owner.telegram_id = $1
+ORDER BY r.id DESC`
+
+	qry := r.getQueryable(tx)
+	rows, err := qry.Query(ctx, q, telegramID)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to list referrals", slog.Any("error", err), slog.String("telegram_id", telegramID))
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]repoModels.Referral, 0)
+	for rows.Next() {
+		var item repoModels.Referral
+		if scanErr := rows.Scan(&item.ID, &item.TelegramID, &item.Name, &item.Username, &item.CompletedTasksCount, &item.Earnings); scanErr != nil {
+			return nil, scanErr
+		}
+		items = append(items, item)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return items, nil
+}
+
+// CreatePromptHistory saves a prompt history record for a profile.
+func (r *Repository) CreatePromptHistory(ctx context.Context, tx pgx.Tx, item repoModels.PromptHistory) (int64, error) {
+	const q = `
+INSERT INTO prompt_history(profile_id, prompt, category)
+VALUES($1, $2, $3)
+RETURNING id`
+
+	qry := r.getQueryable(tx)
+	var id int64
+	err := qry.QueryRow(ctx, q, item.ProfileID, item.Prompt, item.Category).Scan(&id)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to create prompt history", slog.Any("error", err), slog.Int64("profile_id", item.ProfileID))
+		return 0, err
+	}
+	return id, nil
+}
+
+// ListPromptHistoryByTelegramID returns recent saved prompts for a profile.
+func (r *Repository) ListPromptHistoryByTelegramID(ctx context.Context, tx pgx.Tx, telegramID string, limit int32) ([]repoModels.PromptHistory, error) {
+	const q = `
+SELECT ph.id, ph.profile_id, p.telegram_id, ph.prompt, COALESCE(ph.category, ''), ph.created_at
+FROM profiles p
+JOIN prompt_history ph ON ph.profile_id = p.id
+WHERE p.telegram_id = $1
+ORDER BY ph.created_at DESC, ph.id DESC
+LIMIT $2`
+
+	qry := r.getQueryable(tx)
+	rows, err := qry.Query(ctx, q, telegramID, limit)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to list prompt history", slog.Any("error", err), slog.String("telegram_id", telegramID))
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]repoModels.PromptHistory, 0)
+	for rows.Next() {
+		var item repoModels.PromptHistory
+		if scanErr := rows.Scan(&item.ID, &item.ProfileID, &item.TelegramID, &item.Prompt, &item.Category, &item.CreatedAt); scanErr != nil {
+			return nil, scanErr
+		}
+		items = append(items, item)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return items, nil
+}
