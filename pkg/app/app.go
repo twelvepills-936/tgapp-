@@ -192,19 +192,31 @@ func (a *App) corsMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if origin != "" {
-			allowed := wildcard
-			if !allowed {
-				_, allowed = allowedSet[origin]
-			}
-			if allowed {
+		allowed := wildcard || origin == ""
+		if !allowed && origin != "" {
+			_, allowed = allowedSet[origin]
+		}
+		if !allowed && origin != "" && isTelegramMiniAppOrigin(origin) {
+			allowed = true
+		}
+
+		if allowed {
+			if wildcard && origin == "" {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+			} else if wildcard {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				if origin != "" {
+					w.Header().Set("Vary", "Origin")
+					w.Header().Set("Access-Control-Allow-Credentials", "true")
+				}
+			} else {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 				w.Header().Set("Vary", "Origin")
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
-				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-				w.Header().Set("Access-Control-Max-Age", "86400")
 			}
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept")
+			w.Header().Set("Access-Control-Max-Age", "86400")
 		}
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
@@ -212,4 +224,9 @@ func (a *App) corsMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func isTelegramMiniAppOrigin(origin string) bool {
+	origin = strings.ToLower(strings.TrimSpace(origin))
+	return strings.HasSuffix(origin, ".telegram.org")
 }

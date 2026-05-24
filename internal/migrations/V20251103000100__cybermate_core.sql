@@ -1,3 +1,5 @@
+-- CyberMate core schema (profiles, wallets, referrals)
+
 -- profiles
 CREATE TABLE IF NOT EXISTS profiles (
     id BIGSERIAL PRIMARY KEY,

@@ -16,7 +16,7 @@ SQL migrations live in `internal/migrations/`. They create `profiles`, `wallets`
 After the first successful deploy you should see in logs:
 
 ```text
-INFO applied migration version=20251103000100 description=facebase_core
+INFO applied migration version=20251103000100 description=cybermate_core
 ...
 ```
 
@@ -40,12 +40,20 @@ make db.migrate
 |----------|--------|
 | `DATABASE_URL` | From Railway Postgres |
 | `ENVIRONMENT` | `production` |
-| `CORS_ALLOWED_ORIGINS` | Frontend public URL |
+| `CORS_ALLOWED_ORIGINS` | `*` (рекомендуется для Telegram Mini App) или точный URL фронта, напр. `https://tgappfront-production.up.railway.app` |
+
+Если в Mini App при генерации видите **Load failed** — чаще всего CORS (нет заголовков) или неверный `VITE_API_BASE_URL` на фронте. Поставьте `CORS_ALLOWED_ORIGINS=*`, redeploy бэкенд.
+
+Долгие ответы DeepSeek (>60 с) иногда обрывает прокси — попробуйте **yandexgpt** или короче промпт.
 | AI keys | See `docs/configuration.md` |
 | `TELEGRAM_BOT_TOKEN` | Optional |
 | `TELEGRAM_WEBHOOK_URL` | `https://<backend>/v1/telegram/webhook` |
 
-`PORT` is set by Railway — do not force `8090`.
+`PORT` is set by Railway — **do not** set `APP_HTTP_PORT=8090` (иначе снаружи порт не совпадёт и запросы «висят» → Load failed). Бэкенд слушает `$PORT` автоматически.
+
+Проверка: `GET https://ваш-бэкенд.up.railway.app/health` → `{"status":"ok"}`.
+
+Профиль/кошелёк/AI идут **напрямую в usecase** (без лишнего gRPC-хода) — быстрее и стабильнее.
 
 ## Error: `relation "profiles" does not exist`
 

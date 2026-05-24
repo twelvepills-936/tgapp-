@@ -26,7 +26,18 @@ func main() {
 
 	addConfig := config.LoadConfig()
 
-	cfg := app.LoadConfigFromEnv()
+	cfg := app.Config{
+		GRPCPort:     addConfig.App.GRPCPort,
+		HTTPPort:     addConfig.App.HTTPPort,
+		ReadTimeout:  addConfig.Server.ReadTimeout,
+		WriteTimeout: addConfig.Server.WriteTimeout,
+		IdleTimeout:  addConfig.Server.IdleTimeout,
+		CORSOrigins:  addConfig.CORS.AllowedOrigins,
+	}
+	slog.InfoContext(ctx, "starting HTTP server",
+		slog.Int("http_port", cfg.HTTPPort),
+		slog.Int("grpc_port", cfg.GRPCPort),
+	)
 
 	application, err := app.New(ctx, cfg)
 	if err != nil {
@@ -82,8 +93,9 @@ func main() {
 	}
 
 	rootMux := http.NewServeMux()
-	rootMux.Handle("/v1/generate/text", httphandler.NewGenerateTextHandler(uc))
-	rootMux.Handle("/v1/generate/image", httphandler.NewGenerateImageHandler(uc))
+	httphandler.NewProfileRESTHandler(uc).RegisterRoutes(rootMux)
+	rootMux.HandleFunc("POST /v1/generate/text", httphandler.NewGenerateTextHandler(uc).ServeHTTP)
+	rootMux.HandleFunc("POST /v1/generate/image", httphandler.NewGenerateImageHandler(uc).ServeHTTP)
 	rootMux.Handle("/v1/telegram/webhook", httphandler.NewTelegramWebhookHandler(tgBot))
 	rootMux.Handle("/", application.ServeMux)
 	application.SetHTTPRootHandler(httphandler.NormalizePath(rootMux))
