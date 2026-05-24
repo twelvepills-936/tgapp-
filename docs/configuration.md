@@ -94,6 +94,8 @@ Image generation (**Nano Banana**) uses `POST /v1/generate/image` with `model=na
 | Variable | Default | Description |
 |---|---|---|
 | `TELEGRAM_BOT_TOKEN` | _(empty)_ | Bot token from @BotFather. Leave empty to disable the bot. |
+| `TELEGRAM_WEBHOOK_URL` | _(empty)_ | Public HTTPS URL for webhook, e.g. `https://your-app.up.railway.app/v1/telegram/webhook`. When set, polling is disabled and the URL is registered on startup. |
+| `TELEGRAM_WEBHOOK_SECRET` | _(empty)_ | Secret token sent in `X-Telegram-Bot-Api-Secret-Token` (recommended on production). |
 
 ## S3 (optional, for file/avatar uploads)
 

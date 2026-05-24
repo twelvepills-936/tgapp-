@@ -35,6 +35,9 @@ YANDEX_GPT_FOLDER_ID=
 GEMINI_API_KEY=       # optional: model gemini-flash
 OPENAI_API_KEY=       # optional: model openai
 TELEGRAM_BOT_TOKEN=   # get from @BotFather, leave empty to disable
+# Production (Railway): webhook instead of polling
+# TELEGRAM_WEBHOOK_URL=https://your-app.up.railway.app/v1/telegram/webhook
+# TELEGRAM_WEBHOOK_SECRET=random-secret-string
 CORS_ALLOWED_ORIGINS=*
 ```
 
@@ -82,7 +85,7 @@ Service endpoints:
 cmd/service/          Entry point
 internal/
   domain.go           Repository + UseCase interfaces (Clean Architecture)
-  bot/                Telegram bot (polling, /start handler)
+  bot/                Telegram bot (webhook or polling, /start handler)
   migrations/         SQL migrations (applied by Flyway)
   repository/         PostgreSQL data access
   service/            gRPC handlers (transport layer)

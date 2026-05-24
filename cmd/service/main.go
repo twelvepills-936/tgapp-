@@ -32,12 +32,18 @@ func main() {
 		panic(err)
 	}
 
-	// Telegram bot: start polling in background if token is configured.
-	b, err := bot.New()
+	tgCfg := bot.LoadConfig()
+	tgBot, err := bot.New(tgCfg)
 	if err != nil {
 		slog.WarnContext(ctx, "failed to init bot", logger.ErrorAttr(err))
-	} else {
-		go b.StartPolling(ctx)
+	} else if tgBot.Enabled() {
+		if tgCfg.UseWebhook() {
+			if err := tgBot.RegisterWebhook(ctx, tgCfg.WebhookURL); err != nil {
+				slog.ErrorContext(ctx, "failed to register telegram webhook", logger.ErrorAttr(err))
+			}
+		} else {
+			go tgBot.StartPolling(ctx)
+		}
 	}
 
 	pool, err := repository.NewPostgres(ctx, repoModels.ConfigPostgres(addConfig.Postgres))
@@ -67,6 +73,7 @@ func main() {
 	rootMux := http.NewServeMux()
 	rootMux.Handle("/v1/generate/text", httphandler.NewGenerateTextHandler(uc))
 	rootMux.Handle("/v1/generate/image", httphandler.NewGenerateImageHandler(uc))
+	rootMux.Handle("/v1/telegram/webhook", httphandler.NewTelegramWebhookHandler(tgBot))
 	rootMux.Handle("/", application.ServeMux)
 	application.SetHTTPRootHandler(rootMux)
 
