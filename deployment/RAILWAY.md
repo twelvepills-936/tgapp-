@@ -49,7 +49,58 @@ make db.migrate
 | `TELEGRAM_BOT_TOKEN` | Optional |
 | `TELEGRAM_WEBHOOK_URL` | `https://<backend>/v1/telegram/webhook` |
 
-`PORT` is set by Railway — **do not** set `APP_HTTP_PORT=8090` (иначе снаружи порт не совпадёт и запросы «висят» → Load failed). Бэкенд слушает `$PORT` автоматически.
+## Public Networking (порт в UI, не в Variables)
+
+На скрине **Target port = 8080** — это правильно, если в логах деплоя есть:
+
+```text
+starting HTTP server http_port=8080
+CyberMate backend listening on http://0.0.0.0:8080
+```
+
+**Не** ставьте 8090 в Target port на Railway.
+
+| Где | Что |
+|-----|-----|
+| Railway → Networking → Target port | **8080** (или Auto) |
+| Variables `APP_HTTP_PORT` | **удалить** |
+| Variables `PORT` | **не добавлять** (даёт Railway) |
+
+Если в Mini App **Load failed**, а URL API верный — откройте в браузере:
+
+`https://tgapp-production-469a.up.railway.app/health`
+
+- `{"status":"ok"}` — бэкенд жив, ищите CORS / фронт.
+- **502 / Application failed to respond** — процесс не отвечает на `PORT` до таймаута healthcheck. Откройте **Deploy Logs** и найдите одно из:
+  - `failed to init postgres` — нет или неверный **`DATABASE_URL`** (привяжите Postgres к сервису).
+  - `failed to apply database migrations` — нет папки `internal/migrations` (неверный **Root Directory**).
+  - `failed to init app` / `gRPC server failed to start` — редко; перезапуск.
+  - Нет строки `CyberMate backend listening on http://0.0.0.0:8080` — бинарь не стартовал (`./bin/server` не собран → проверьте **Build Logs**).
+  - Сразу после старта должны быть `starting CyberMate backend` и (через несколько секунд) `API routes ready`. **`GET /health`** отвечает `{"status":"ok"}` ещё до подключения к БД.
+
+**Root Directory** сервиса бэкенда = корень репозитория `tgback` (где `cmd/service`, `railway.toml`).
+
+**Start Command** (если задан вручную): **`./bin/server`** или оставьте из `railway.toml`.
+
+### Ошибка: в логах только `migrations complete`, а запросы дают 502
+
+Строка `INFO migrations complete dir=internal/migrations` пишется **утилитой** `cmd/migrate` (`go run ./cmd/migrate`). После неё процесс **завершается** — порт `PORT` никто не слушает → 502.
+
+| Правильно (API) | Неправильно (только миграции) |
+|-----------------|-------------------------------|
+| `./bin/server` | `go run ./cmd/migrate` |
+| Build: `go build -o bin/server ./cmd/service` | Build: `go build -o bin/migrate ./cmd/migrate` |
+
+В логах **рабочего** бэкенда должны быть:
+
+```text
+starting CyberMate backend http_port=8080
+CyberMate backend listening on http://0.0.0.0:8080
+database migrations applied (HTTP server keeps running)
+API routes ready
+```
+
+Если видите только `migrations complete` — в Railway → **Settings → Deploy → Custom Start Command** сбросьте на `./bin/server` или удалите override.
 
 Проверка: `GET https://ваш-бэкенд.up.railway.app/health` → `{"status":"ok"}`.
 

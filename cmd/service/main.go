@@ -3,8 +3,8 @@
 import (
 	"context"
 	"log/slog"
-
 	"net/http"
+	"os"
 
 	"gitlab16.skiftrade.kz/templates/go/internal/bot"
 	"gitlab16.skiftrade.kz/templates/go/internal/httphandler"
@@ -34,45 +34,56 @@ func main() {
 		IdleTimeout:  addConfig.Server.IdleTimeout,
 		CORSOrigins:  addConfig.CORS.AllowedOrigins,
 	}
-	slog.InfoContext(ctx, "starting HTTP server",
+
+	migrationsDir := migrate.ResolveDir()
+	_, migrationsStatErr := os.Stat(migrationsDir)
+	slog.InfoContext(ctx, "starting CyberMate backend",
 		slog.Int("http_port", cfg.HTTPPort),
 		slog.Int("grpc_port", cfg.GRPCPort),
+		slog.String("environment", addConfig.App.Environment),
+		slog.Bool("database_url_set", addConfig.Postgres.DatabaseURL != ""),
+		slog.String("migrations_dir", migrationsDir),
+		slog.Bool("migrations_dir_ok", migrationsStatErr == nil),
 	)
 
 	application, err := app.New(ctx, cfg)
 	if err != nil {
-		panic(err)
+		slog.ErrorContext(ctx, "failed to create app", logger.ErrorAttr(err))
+		os.Exit(1)
 	}
 
-	tgCfg := bot.LoadConfig()
-	tgBot, err := bot.New(tgCfg)
-	if err != nil {
-		slog.WarnContext(ctx, "failed to init bot", logger.ErrorAttr(err))
-	} else if tgBot.Enabled() {
-		if tgCfg.UseWebhook() {
-			if err := tgBot.RegisterWebhook(ctx, tgCfg.WebhookURL); err != nil {
-				slog.ErrorContext(ctx, "failed to register telegram webhook", logger.ErrorAttr(err))
-			}
-		} else {
-			go tgBot.StartPolling(ctx)
-		}
+	staged := httphandler.NewStagedRoot()
+	application.SetHTTPRootHandler(staged)
+
+	if err := application.Init(ctx); err != nil {
+		slog.ErrorContext(ctx, "failed to init app", logger.ErrorAttr(err))
+		os.Exit(1)
 	}
+
+	listenErr := make(chan error, 1)
+	go func() {
+		if err := application.Run(ctx); err != nil {
+			listenErr <- err
+		}
+	}()
 
 	pool, err := repository.NewPostgres(ctx, repoModels.ConfigPostgres(addConfig.Postgres))
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to init postgres", logger.ErrorAttr(err))
-		return
+		os.Exit(1)
 	}
 	defer pool.Close()
 
-	migrationsDir := migrate.ResolveDir()
 	if err := migrate.Apply(ctx, pool, migrationsDir); err != nil {
 		slog.ErrorContext(ctx, "failed to apply database migrations",
 			logger.ErrorAttr(err),
 			slog.String("dir", migrationsDir),
 		)
-		return
+		os.Exit(1)
 	}
+	slog.InfoContext(ctx, "database migrations applied (HTTP server keeps running)",
+		slog.String("dir", migrationsDir),
+	)
 
 	repo := repository.NewRepository(pool)
 
@@ -83,32 +94,52 @@ func main() {
 	})
 	svc := service.NewService(uc)
 
-	// Register gRPC services BEFORE starting the server
 	api.RegisterCyberMateServer(application.GrpcServer, svc)
 
-	err = api.RegisterCyberMateHandler(ctx, application.ServeMux, application.GrpcConn)
-	if err != nil {
+	if err := api.RegisterCyberMateHandler(ctx, application.ServeMux, application.GrpcConn); err != nil {
 		slog.ErrorContext(ctx, "failed to register cybermate handler", logger.ErrorAttr(err))
-		return
+		os.Exit(1)
 	}
 
 	rootMux := http.NewServeMux()
 	httphandler.NewProfileRESTHandler(uc).RegisterRoutes(rootMux)
 	rootMux.HandleFunc("POST /v1/generate/text", httphandler.NewGenerateTextHandler(uc).ServeHTTP)
 	rootMux.HandleFunc("POST /v1/generate/image", httphandler.NewGenerateImageHandler(uc).ServeHTTP)
-	rootMux.Handle("/v1/telegram/webhook", httphandler.NewTelegramWebhookHandler(tgBot))
+	tgWebhook := httphandler.NewTelegramWebhookSlot()
+	rootMux.Handle("/v1/telegram/webhook", tgWebhook)
 	rootMux.Handle("/", application.ServeMux)
-	application.SetHTTPRootHandler(httphandler.NormalizePath(rootMux))
+	staged.SetReady(httphandler.NormalizePath(rootMux))
 
-	err = application.Init(ctx)
+	slog.InfoContext(ctx, "API routes ready")
+
+	tgCfg := bot.LoadConfig()
+	go initTelegramBot(ctx, tgCfg, tgWebhook)
+
+	select {
+	case err := <-listenErr:
+		if err != nil {
+			slog.ErrorContext(ctx, "HTTP server stopped", logger.ErrorAttr(err))
+			os.Exit(1)
+		}
+	}
+}
+
+func initTelegramBot(ctx context.Context, tgCfg bot.Config, slot *httphandler.TelegramWebhookSlot) {
+	tgBot, err := bot.New(tgCfg)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to init app", logger.ErrorAttr(err))
+		slog.WarnContext(ctx, "failed to init bot", logger.ErrorAttr(err))
 		return
 	}
+	slot.Set(tgBot)
 
-	err = application.Run(ctx)
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to run app", logger.ErrorAttr(err))
+	if !tgBot.Enabled() {
 		return
 	}
+	if tgCfg.UseWebhook() {
+		if err := tgBot.RegisterWebhook(ctx, tgCfg.WebhookURL); err != nil {
+			slog.ErrorContext(ctx, "failed to register telegram webhook", logger.ErrorAttr(err))
+		}
+		return
+	}
+	go tgBot.StartPolling(ctx)
 }

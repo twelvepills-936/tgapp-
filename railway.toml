@@ -1,0 +1,10 @@
+# Railway backend (set Root Directory = repository root or folder with this file)
+
+[build]
+buildCommand = "go build -o bin/server ./cmd/service"
+
+[deploy]
+startCommand = "./bin/server"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"

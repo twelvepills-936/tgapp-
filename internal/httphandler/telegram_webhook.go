@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gitlab16.skiftrade.kz/templates/go/internal/bot"
 )
 
 const telegramWebhookPath = "/v1/telegram/webhook"
@@ -26,7 +25,7 @@ type TelegramWebhookHandler struct {
 	bot TelegramUpdateProcessor
 }
 
-func NewTelegramWebhookHandler(b *bot.Bot) *TelegramWebhookHandler {
+func NewTelegramWebhookHandler(b TelegramUpdateProcessor) *TelegramWebhookHandler {
 	return &TelegramWebhookHandler{bot: b}
 }
 

@@ -131,7 +131,7 @@ func (a *App) Init(ctx context.Context) error {
 	case err := <-errChan:
 		return err
 	case <-readyChan:
-	case <-time.After(5 * time.Second):
+	case <-time.After(30 * time.Second):
 		return fmt.Errorf("gRPC server failed to start in time")
 	}
 
@@ -171,6 +171,7 @@ func (a *App) Run(ctx context.Context) error {
 		}
 	}()
 
+	fmt.Printf("CyberMate backend listening on http://0.0.0.0:%d (PORT env)\n", a.httpPort)
 	if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("HTTP serve error: %w", err)
 	}

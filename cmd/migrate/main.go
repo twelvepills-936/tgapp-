@@ -14,6 +14,9 @@ import (
 
 func main() {
 	ctx := context.Background()
+	slog.WarnContext(ctx,
+		"one-shot migrate CLI: applies SQL and exits; Railway/API must use ./bin/server (cmd/service), not cmd/migrate",
+	)
 	cfg := config.LoadConfig()
 
 	pool, err := repository.NewPostgres(ctx, repoModels.ConfigPostgres(cfg.Postgres))
@@ -29,5 +32,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	slog.InfoContext(ctx, "migrations complete", slog.String("dir", dir))
+	slog.InfoContext(ctx, "migrate CLI finished (process will exit; no HTTP listener)",
+		slog.String("dir", dir),
+	)
 }
