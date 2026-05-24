@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "tgapp (docker)",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "myapp_db",
+      "Username": "postgres",
+      "PassFile": "/pgpass",
+      "SSLMode": "prefer"
+    }
+  }
+}

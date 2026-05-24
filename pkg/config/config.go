@@ -14,6 +14,9 @@ type Config struct {
 	App      ConfigApp
 	CORS     ConfigCORS
 	Server   ConfigServer
+	AI       ConfigAI
+	Gemini   ConfigGemini
+	Yandex   ConfigYandex
 }
 
 type ConfigApp struct {
@@ -49,6 +52,27 @@ type ConfigPostgres struct {
 
 type ConfigCORS struct {
 	AllowedOrigins []string
+}
+
+type ConfigAI struct {
+	APIKey  string
+	BaseURL string
+	Model   string
+}
+
+type ConfigGemini struct {
+	APIKey     string
+	Model      string
+	ImageModel string
+	BaseURL    string
+}
+
+type ConfigYandex struct {
+	APIKey   string
+	FolderID string
+	Model    string
+	ModelURI string
+	BaseURL  string
 }
 
 func getenv(key, def string) string {
@@ -124,6 +148,40 @@ func LoadConfig() Config {
 		App:      LoadAppConfig(),
 		CORS:     LoadCORSConfig(),
 		Server:   LoadServerConfig(),
+		AI:       LoadAIConfig(),
+		Gemini:   LoadGeminiConfig(),
+		Yandex:   LoadYandexConfig(),
+	}
+}
+
+func LoadAIConfig() ConfigAI {
+	model := getenv("OPENAI_TEXT_MODEL", "")
+	if model == "" {
+		model = getenv("OPENAI_MODEL", "gpt-4o-mini")
+	}
+	return ConfigAI{
+		APIKey:  getenv("OPENAI_API_KEY", ""),
+		BaseURL: getenv("OPENAI_API_BASE_URL", ""),
+		Model:   model,
+	}
+}
+
+func LoadYandexConfig() ConfigYandex {
+	return ConfigYandex{
+		APIKey:   getenv("YANDEX_GPT_API_KEY", ""),
+		FolderID: getenv("YANDEX_GPT_FOLDER_ID", ""),
+		Model:    getenv("YANDEX_GPT_MODEL", "yandexgpt/latest"),
+		ModelURI: getenv("YANDEX_GPT_MODEL_URI", ""),
+		BaseURL:  getenv("YANDEX_GPT_BASE_URL", ""),
+	}
+}
+
+func LoadGeminiConfig() ConfigGemini {
+	return ConfigGemini{
+		APIKey:     getenv("GEMINI_API_KEY", ""),
+		Model:      getenv("GEMINI_MODEL", "gemini-2.0-flash"),
+		ImageModel: getenv("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image"),
+		BaseURL:    getenv("GEMINI_API_BASE_URL", ""),
 	}
 }
 
@@ -134,6 +192,14 @@ func LoadAppConfig() ConfigApp {
 		Environment: getenv("ENVIRONMENT", "development"),
 		LogLevel:    getenv("LOG_LEVEL", "info"),
 	}
+}
+
+// SkipRegistrationCheck is true in development unless DEV_SKIP_REGISTRATION=false.
+func SkipRegistrationCheck() bool {
+	if v := os.Getenv("DEV_SKIP_REGISTRATION"); v != "" {
+		return getenvBool("DEV_SKIP_REGISTRATION", true)
+	}
+	return getenv("ENVIRONMENT", "development") == "development"
 }
 
 func LoadServerConfig() ConfigServer {

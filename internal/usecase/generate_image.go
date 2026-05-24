@@ -1,0 +1,99 @@
+package usecase
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/jackc/pgx/v5"
+	repo "gitlab16.skiftrade.kz/templates/go/internal/repository"
+	ucModels "gitlab16.skiftrade.kz/templates/go/internal/usecase/models"
+	"gitlab16.skiftrade.kz/templates/go/pkg/generator"
+)
+
+func (uc *useCase) GenerateImage(ctx context.Context, input ucModels.GenerateImageInput) (ucModels.GenerateImageOutput, error) {
+	if uc.imageGenerator == nil {
+		return ucModels.GenerateImageOutput{}, generator.ErrImageGeneratorUnavailable
+	}
+
+	requireTelegramID := !uc.skipRegistrationCheck
+	if uc.skipRegistrationCheck && input.TelegramID == "" {
+		input.TelegramID = "dev"
+	}
+	if err := input.Validate(requireTelegramID); err != nil {
+		return ucModels.GenerateImageOutput{}, err
+	}
+
+	model, err := generator.NormalizeImageModel(input.Model)
+	if err != nil {
+		return ucModels.GenerateImageOutput{}, mapGeneratorError(err)
+	}
+
+	var profileID int64
+	if !uc.skipRegistrationCheck {
+		profile, err := uc.repo.GetProfileByTelegramID(ctx, nil, input.TelegramID)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ucModels.GenerateImageOutput{}, ucModels.ErrProfileNotFound
+			}
+			return ucModels.GenerateImageOutput{}, err
+		}
+		profileID = profile.ID
+
+		wallet, err := uc.repo.GetWalletByTelegramID(ctx, nil, input.TelegramID)
+		if err != nil {
+			return ucModels.GenerateImageOutput{}, err
+		}
+		if wallet.BalanceAvailable < generator.ImageTokenCostFor(model) {
+			return ucModels.GenerateImageOutput{}, ucModels.ErrInsufficientBalance
+		}
+	} else if p, err := uc.repo.GetProfileByTelegramID(ctx, nil, input.TelegramID); err == nil {
+		profileID = p.ID
+	}
+
+	category := input.Category
+	if category == "" {
+		category = "image"
+	}
+
+	result, err := uc.imageGenerator.GenerateImage(ctx, input.Prompt, category)
+	if err != nil {
+		return ucModels.GenerateImageOutput{}, mapGeneratorError(err)
+	}
+
+	tokensUsed := result.TokensUsed
+	if tokensUsed == 0 {
+		tokensUsed = generator.ImageTokenCostFor(model)
+	}
+
+	imageURL, err := imageURLForBytes(ctx, input.TelegramID, result.ImageBytes, result.MimeType)
+	if err != nil {
+		return ucModels.GenerateImageOutput{}, err
+	}
+
+	if profileID != 0 && !uc.skipRegistrationCheck {
+		cost := generator.ImageTokenCostFor(model)
+		desc := fmt.Sprintf("AI image generation (%s)", model)
+		if err := uc.repo.DeductWalletBalance(ctx, nil, profileID, cost, desc); err != nil {
+			if errors.Is(err, repo.ErrInsufficientBalance) {
+				return ucModels.GenerateImageOutput{}, ucModels.ErrInsufficientBalance
+			}
+			return ucModels.GenerateImageOutput{}, err
+		}
+	}
+
+	if profileID != 0 {
+		_, _ = uc.SavePromptHistory(ctx, ucModels.SavePromptHistoryInput{
+			TelegramID: input.TelegramID,
+			Prompt:     input.Prompt,
+			Category:   category,
+			Model:      model,
+		})
+	}
+
+	return ucModels.GenerateImageOutput{
+		ImageURL:   imageURL,
+		Model:      model,
+		TokensUsed: tokensUsed,
+	}, nil
+}

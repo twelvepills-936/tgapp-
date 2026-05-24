@@ -6,4 +6,6 @@ const (
 	ProfileAlreadyRegistered = "PROFILE_ALREADY_REGISTERED"
 	Internal                 = "INTERNAL"
 	InvalidArgument          = "INVALID_ARGUMENT"
+	AIProviderError          = "AI_PROVIDER_ERROR"
+	InsufficientBalance      = "INSUFFICIENT_BALANCE"
 )

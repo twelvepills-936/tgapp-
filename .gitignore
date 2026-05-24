@@ -5,6 +5,7 @@
 *.out
 .vscode/settings.json
 vendor
+third_party/
 
 # Protobuf compiler
 protoc.exe

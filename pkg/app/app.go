@@ -31,12 +31,18 @@ type App struct {
 	ServeMux     *runtime.ServeMux
 	GrpcConn     *grpc.ClientConn
 	httpServer   *http.Server
+	httpRoot     http.Handler
 	grpcPort     int
 	httpPort     int
 	readTimeout  time.Duration
 	writeTimeout time.Duration
 	idleTimeout  time.Duration
 	corsOrigins  []string
+}
+
+// SetHTTPRootHandler wraps the gRPC gateway (e.g. extra REST routes).
+func (a *App) SetHTTPRootHandler(h http.Handler) {
+	a.httpRoot = h
 }
 
 // LoadConfigFromEnv populates Config from environment variables.
@@ -129,10 +135,15 @@ func (a *App) Init(ctx context.Context) error {
 		return fmt.Errorf("gRPC server failed to start in time")
 	}
 
+	root := a.httpRoot
+	if root == nil {
+		root = a.ServeMux
+	}
+
 	httpAddr := fmt.Sprintf(":%d", a.httpPort)
 	a.httpServer = &http.Server{
 		Addr:         httpAddr,
-		Handler:      a.corsMiddleware(a.ServeMux),
+		Handler:      a.corsMiddleware(root),
 		ReadTimeout:  a.readTimeout,
 		WriteTimeout: a.writeTimeout,
 		IdleTimeout:  a.idleTimeout,

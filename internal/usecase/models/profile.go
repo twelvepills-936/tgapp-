@@ -10,6 +10,7 @@ var (
 	ErrProfileNotFound          = errors.New("ErrProfileNotFound")
 	ErrProfileAlreadyRegistered = errors.New("ErrProfileAlreadyRegistered")
 	ErrInvalidInput             = errors.New("ErrInvalidInput")
+	ErrInsufficientBalance      = errors.New("ErrInsufficientBalance")
 )
 
 type RegisterByTelegramInput struct {
@@ -91,6 +92,7 @@ type SavePromptHistoryInput struct {
 	TelegramID string
 	Prompt     string
 	Category   string
+	Model      string
 }
 
 func (i *SavePromptHistoryInput) Validate() error {
@@ -121,5 +123,87 @@ type PromptHistoryItem struct {
 	ID        int64
 	Prompt    string
 	Category  string
+	Model     string
 	CreatedAt string
+}
+
+type ChatMessageInput struct {
+	Role    string
+	Content string
+}
+
+type GenerateTextInput struct {
+	TelegramID string
+	Prompt     string
+	Category   string
+	Model      string
+	Messages   []ChatMessageInput
+}
+
+func (i *GenerateTextInput) Validate(requireTelegramID bool) error {
+	if requireTelegramID && i.TelegramID == "" {
+		return fmt.Errorf("%w: telegram_id is required", ErrInvalidInput)
+	}
+	if i.Prompt == "" {
+		return fmt.Errorf("%w: prompt is required", ErrInvalidInput)
+	}
+	if len(i.Prompt) > 4000 {
+		return fmt.Errorf("%w: prompt too long", ErrInvalidInput)
+	}
+	if len(i.Category) > 100 {
+		return fmt.Errorf("%w: category too long", ErrInvalidInput)
+	}
+	if len(i.Model) > 50 {
+		return fmt.Errorf("%w: model too long", ErrInvalidInput)
+	}
+	for idx, m := range i.Messages {
+		if len(m.Content) > 4000 {
+			return fmt.Errorf("%w: message %d too long", ErrInvalidInput, idx)
+		}
+		if len(m.Role) > 20 {
+			return fmt.Errorf("%w: message %d role too long", ErrInvalidInput, idx)
+		}
+	}
+	if len(i.Messages) > 40 {
+		return fmt.Errorf("%w: too many messages in context", ErrInvalidInput)
+	}
+	return nil
+}
+
+type GenerateTextOutput struct {
+	Text       string
+	Model      string
+	TokensUsed int64
+}
+
+type GenerateImageInput struct {
+	TelegramID string
+	Prompt     string
+	Category   string
+	Model      string
+}
+
+func (i *GenerateImageInput) Validate(requireTelegramID bool) error {
+	if requireTelegramID && i.TelegramID == "" {
+		return fmt.Errorf("%w: telegram_id is required", ErrInvalidInput)
+	}
+	if i.Prompt == "" {
+		return fmt.Errorf("%w: prompt is required", ErrInvalidInput)
+	}
+	if len(i.Prompt) > 4000 {
+		return fmt.Errorf("%w: prompt too long", ErrInvalidInput)
+	}
+	if len(i.Category) > 100 {
+		return fmt.Errorf("%w: category too long", ErrInvalidInput)
+	}
+	if len(i.Model) > 50 {
+		return fmt.Errorf("%w: model too long", ErrInvalidInput)
+	}
+	return nil
+}
+
+type GenerateImageOutput struct {
+	ImageURL   string
+	Model      string
+	TokensUsed int64
 }

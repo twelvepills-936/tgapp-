@@ -43,5 +43,6 @@ type PromptHistory struct {
 	TelegramID string
 	Prompt     string
 	Category   string
+	Model      string
 	CreatedAt  time.Time
 }

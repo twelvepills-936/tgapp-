@@ -60,6 +60,16 @@ func (f *fakeUC) GetPromptHistoryByTelegramID(ctx context.Context, telegramID st
 	return ucModels.GetPromptHistoryOutput{Items: []ucModels.PromptHistoryItem{{ID: 1, Prompt: "Write a Telegram bio", Category: "profile"}}}, nil
 }
 
+func (f *fakeUC) GenerateImage(ctx context.Context, input ucModels.GenerateImageInput) (ucModels.GenerateImageOutput, error) {
+	return ucModels.GenerateImageOutput{}, nil
+}
+func (f *fakeUC) GenerateText(ctx context.Context, input ucModels.GenerateTextInput) (ucModels.GenerateTextOutput, error) {
+	if input.Prompt == "" {
+		return ucModels.GenerateTextOutput{}, ucModels.ErrInvalidInput
+	}
+	return ucModels.GenerateTextOutput{Text: "generated", Model: "yandexgpt", TokensUsed: 1}, nil
+}
+
 var _ internal.UseCase = (*fakeUC)(nil)
 
 func TestService_RegisterByTelegram_AlreadyExists(t *testing.T) {

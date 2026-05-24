@@ -151,14 +151,21 @@ ORDER BY r.id DESC`
 
 // CreatePromptHistory saves a prompt history record for a profile.
 func (r *Repository) CreatePromptHistory(ctx context.Context, tx pgx.Tx, item repoModels.PromptHistory) (int64, error) {
-	const q = `
+	const qWithModel = `
+INSERT INTO prompt_history(profile_id, prompt, category, model)
+VALUES($1, $2, $3, $4)
+RETURNING id`
+	const qLegacy = `
 INSERT INTO prompt_history(profile_id, prompt, category)
 VALUES($1, $2, $3)
 RETURNING id`
 
 	qry := r.getQueryable(tx)
 	var id int64
-	err := qry.QueryRow(ctx, q, item.ProfileID, item.Prompt, item.Category).Scan(&id)
+	err := qry.QueryRow(ctx, qWithModel, item.ProfileID, item.Prompt, item.Category, item.Model).Scan(&id)
+	if err != nil && isUndefinedColumn(err, "model") {
+		err = qry.QueryRow(ctx, qLegacy, item.ProfileID, item.Prompt, item.Category).Scan(&id)
+	}
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to create prompt history", slog.Any("error", err), slog.Int64("profile_id", item.ProfileID))
 		return 0, err
@@ -168,7 +175,14 @@ RETURNING id`
 
 // ListPromptHistoryByTelegramID returns recent saved prompts for a profile.
 func (r *Repository) ListPromptHistoryByTelegramID(ctx context.Context, tx pgx.Tx, telegramID string, limit int32) ([]repoModels.PromptHistory, error) {
-	const q = `
+	const qWithModel = `
+SELECT ph.id, ph.profile_id, p.telegram_id, ph.prompt, COALESCE(ph.category, ''), COALESCE(ph.model, ''), ph.created_at
+FROM profiles p
+JOIN prompt_history ph ON ph.profile_id = p.id
+WHERE p.telegram_id = $1
+ORDER BY ph.created_at DESC, ph.id DESC
+LIMIT $2`
+	const qLegacy = `
 SELECT ph.id, ph.profile_id, p.telegram_id, ph.prompt, COALESCE(ph.category, ''), ph.created_at
 FROM profiles p
 JOIN prompt_history ph ON ph.profile_id = p.id
@@ -177,7 +191,12 @@ ORDER BY ph.created_at DESC, ph.id DESC
 LIMIT $2`
 
 	qry := r.getQueryable(tx)
-	rows, err := qry.Query(ctx, q, telegramID, limit)
+	rows, err := qry.Query(ctx, qWithModel, telegramID, limit)
+	useLegacy := false
+	if err != nil && isUndefinedColumn(err, "model") {
+		rows, err = qry.Query(ctx, qLegacy, telegramID, limit)
+		useLegacy = true
+	}
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to list prompt history", slog.Any("error", err), slog.String("telegram_id", telegramID))
 		return nil, err
@@ -187,7 +206,13 @@ LIMIT $2`
 	items := make([]repoModels.PromptHistory, 0)
 	for rows.Next() {
 		var item repoModels.PromptHistory
-		if scanErr := rows.Scan(&item.ID, &item.ProfileID, &item.TelegramID, &item.Prompt, &item.Category, &item.CreatedAt); scanErr != nil {
+		var scanErr error
+		if useLegacy {
+			scanErr = rows.Scan(&item.ID, &item.ProfileID, &item.TelegramID, &item.Prompt, &item.Category, &item.CreatedAt)
+		} else {
+			scanErr = rows.Scan(&item.ID, &item.ProfileID, &item.TelegramID, &item.Prompt, &item.Category, &item.Model, &item.CreatedAt)
+		}
+		if scanErr != nil {
 			return nil, scanErr
 		}
 		items = append(items, item)
@@ -198,4 +223,37 @@ LIMIT $2`
 	}
 
 	return items, nil
+}
+
+// DeductWalletBalance subtracts tokens from wallet and records a withdrawal transaction.
+func (r *Repository) DeductWalletBalance(ctx context.Context, tx pgx.Tx, profileID int64, amount int64, description string) error {
+	const updateQ = `
+UPDATE wallets
+SET balance = balance - $2,
+    balance_available = balance_available - $2
+WHERE profile_id = $1
+  AND balance_available >= $2`
+
+	qry := r.getQueryable(tx)
+	tag, err := qry.Exec(ctx, updateQ, profileID, amount)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to deduct wallet balance", slog.Any("error", err), slog.Int64("profile_id", profileID))
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrInsufficientBalance
+	}
+
+	const insertQ = `
+INSERT INTO wallet_transactions(wallet_id, type, amount, status, description)
+SELECT id, 'withdrawal', $2, 'completed', $3
+FROM wallets
+WHERE profile_id = $1`
+
+	_, err = qry.Exec(ctx, insertQ, profileID, amount, description)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to record wallet transaction", slog.Any("error", err), slog.Int64("profile_id", profileID))
+		return err
+	}
+	return nil
 }

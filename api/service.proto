@@ -83,6 +83,18 @@ service CyberMate {
       description: "Get prompt history by telegram id"
     };
   }
+
+  // Generates text from a user prompt (AI).
+  rpc GenerateText (GenerateTextRequest) returns (GenerateTextResponse) {
+    option (google.api.http) = {
+      post: "/v1/generate/text"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "GenerateText"
+      description: "Generate text content from a prompt for a Telegram user"
+    };
+  }
 }
 
 message GetUserResponse {
@@ -136,6 +148,7 @@ message PromptHistoryItem {
   string prompt = 2;
   string category = 3;
   string created_at = 4;
+  string model = 5;
 }
 
 message GetUserByTelegramIdRequest {
@@ -154,6 +167,7 @@ message CreatePromptHistoryRequest {
   string telegram_id = 1 [(google.api.field_behavior) = REQUIRED];
   string prompt = 2 [(google.api.field_behavior) = REQUIRED];
   string category = 3;
+  string model = 4;
 }
 
 message GetPromptHistoryByTelegramIdRequest {
@@ -175,4 +189,14 @@ message CreatePromptHistoryResponse {
 
 message GetPromptHistoryResponse {
   repeated PromptHistoryItem items = 1;
+}
+
+message GenerateTextRequest {
+  string telegram_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string prompt = 2 [(google.api.field_behavior) = REQUIRED];
+  string category = 3;
+}
+
+message GenerateTextResponse {
+  string text = 1;
 }

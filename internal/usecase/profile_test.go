@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"gitlab16.skiftrade.kz/templates/go/internal"
+	repo "gitlab16.skiftrade.kz/templates/go/internal/repository"
 	repoModels "gitlab16.skiftrade.kz/templates/go/internal/repository/models"
 	ucModels "gitlab16.skiftrade.kz/templates/go/internal/usecase/models"
 )
@@ -102,11 +103,26 @@ func (f *fakeRepoProfile) ListPromptHistoryByTelegramID(ctx context.Context, tx 
 	return items, nil
 }
 
+func (f *fakeRepoProfile) DeductWalletBalance(ctx context.Context, tx pgx.Tx, profileID int64, amount int64, description string) error {
+	for tid, w := range f.wallets {
+		if w.ProfileID == profileID {
+			if w.BalanceAvailable < amount {
+				return repo.ErrInsufficientBalance
+			}
+			w.BalanceAvailable -= amount
+			w.Balance -= amount
+			f.wallets[tid] = w
+			return nil
+		}
+	}
+	return repo.ErrInsufficientBalance
+}
+
 var _ internal.Repository = (*fakeRepoProfile)(nil)
 
 func TestRegisterByTelegram_CreatesProfile(t *testing.T) {
 	repo := &fakeRepoProfile{exists: map[string]repoModels.Profile{}, wallets: map[string]repoModels.Wallet{}, referrals: map[string][]repoModels.Referral{}, transactions: map[string][]repoModels.WalletTransaction{}, prompts: map[string][]repoModels.PromptHistory{}}
-	uc := NewUseCase(repo)
+	uc := NewUseCase(repo, nil, nil, UseCaseOptions{})
 
 	values := url.Values{}
 	values.Set("user", `{"id":123,"first_name":"Ivan","username":"ivan","photo_url":"","language_code":"ru"}`)
@@ -123,7 +139,7 @@ func TestRegisterByTelegram_CreatesProfile(t *testing.T) {
 
 func TestRegisterByTelegram_AlreadyExists(t *testing.T) {
 	repo := &fakeRepoProfile{exists: map[string]repoModels.Profile{"123": {TelegramID: "123"}}, wallets: map[string]repoModels.Wallet{}, referrals: map[string][]repoModels.Referral{}, transactions: map[string][]repoModels.WalletTransaction{}, prompts: map[string][]repoModels.PromptHistory{}}
-	uc := NewUseCase(repo)
+	uc := NewUseCase(repo, nil, nil, UseCaseOptions{})
 
 	values := url.Values{}
 	values.Set("user", `{"id":123,"first_name":"Ivan","username":"ivan"}`)
@@ -137,7 +153,7 @@ func TestRegisterByTelegram_AlreadyExists(t *testing.T) {
 
 func TestGetUserByTelegramID_NotFound(t *testing.T) {
 	repo := &fakeRepoProfile{exists: map[string]repoModels.Profile{}, wallets: map[string]repoModels.Wallet{}, referrals: map[string][]repoModels.Referral{}, transactions: map[string][]repoModels.WalletTransaction{}, prompts: map[string][]repoModels.PromptHistory{}}
-	uc := NewUseCase(repo)
+	uc := NewUseCase(repo, nil, nil, UseCaseOptions{})
 	_, err := uc.GetUserByTelegramID(context.Background(), "not-exists")
 	if !errors.Is(err, ucModels.ErrProfileNotFound) {
 		t.Fatalf("expected ErrProfileNotFound, got %v", err)
@@ -154,7 +170,7 @@ func TestGetWalletByTelegramID_OK(t *testing.T) {
 		},
 		prompts: map[string][]repoModels.PromptHistory{},
 	}
-	uc := NewUseCase(repo)
+	uc := NewUseCase(repo, nil, nil, UseCaseOptions{})
 
 	out, err := uc.GetWalletByTelegramID(context.Background(), "123")
 	if err != nil {
@@ -178,7 +194,7 @@ func TestGetReferralsByTelegramID_OK(t *testing.T) {
 		transactions: map[string][]repoModels.WalletTransaction{},
 		prompts:      map[string][]repoModels.PromptHistory{},
 	}
-	uc := NewUseCase(repo)
+	uc := NewUseCase(repo, nil, nil, UseCaseOptions{})
 
 	out, err := uc.GetReferralsByTelegramID(context.Background(), "123")
 	if err != nil {
@@ -186,6 +202,30 @@ func TestGetReferralsByTelegramID_OK(t *testing.T) {
 	}
 	if len(out.Items) != 1 {
 		t.Fatalf("unexpected referrals count: %d", len(out.Items))
+	}
+}
+
+func TestSavePromptHistory_DevWithoutProfile_OK(t *testing.T) {
+	repo := &fakeRepoProfile{
+		exists:  map[string]repoModels.Profile{},
+		prompts: map[string][]repoModels.PromptHistory{},
+	}
+	uc := NewUseCase(repo, nil, nil, UseCaseOptions{SkipRegistrationCheck: true})
+
+	saved, err := uc.SavePromptHistory(context.Background(), ucModels.SavePromptHistoryInput{
+		TelegramID: "999",
+		Prompt:     "test prompt",
+		Category:   "text",
+		Model:      "yandexgpt",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if saved.Item.Prompt != "test prompt" || saved.Item.Model != "yandexgpt" {
+		t.Fatalf("unexpected item: %+v", saved.Item)
+	}
+	if len(repo.prompts) != 0 {
+		t.Fatalf("expected no DB save in dev without profile")
 	}
 }
 
@@ -197,7 +237,7 @@ func TestSavePromptHistory_AndGetHistory_OK(t *testing.T) {
 		transactions: map[string][]repoModels.WalletTransaction{},
 		prompts:      map[string][]repoModels.PromptHistory{},
 	}
-	uc := NewUseCase(repo)
+	uc := NewUseCase(repo, nil, nil, UseCaseOptions{})
 
 	saved, err := uc.SavePromptHistory(context.Background(), ucModels.SavePromptHistoryInput{
 		TelegramID: "123",

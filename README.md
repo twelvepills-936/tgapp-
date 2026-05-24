@@ -30,6 +30,10 @@ Key variables to change for local dev (defaults already match Docker Compose):
 
 ```
 PG_PASSWORD=postgres
+YANDEX_GPT_API_KEY=   # Yandex Cloud — default model for Russia
+YANDEX_GPT_FOLDER_ID=
+GEMINI_API_KEY=       # optional: model gemini-flash
+OPENAI_API_KEY=       # optional: model openai
 TELEGRAM_BOT_TOKEN=   # get from @BotFather, leave empty to disable
 CORS_ALLOWED_ORIGINS=*
 ```
@@ -43,7 +47,20 @@ docker compose run --rm migrate
 make db.up
 ```
 
+Copy `.env.docker` settings into `.env` for local dev (`PG_PORT=5433` — Postgres is published on host port **5433**, not 5432).
+
 The `migrate` container is a one-shot task: it applies all SQL files from `internal/migrations/` and then exits with code `0`.
+
+### pgAdmin (optional)
+
+```bash
+docker compose up -d postgres pgadmin
+```
+
+Open http://localhost:5050 — login `admin@local.dev` / `admin` (see `.env.docker`).  
+Server **tgapp (docker)** is preconfigured (`Host`: `postgres`, port `5432` inside the Docker network).
+
+If you use **desktop pgAdmin** on Windows, connect to `localhost` port **5433** (user/password/database from `.env.docker`). Port `5432` is usually a different local PostgreSQL instance.
 
 ### 3. Run the service
 
@@ -89,6 +106,7 @@ docs/                 Configuration reference
 | Method | URL | Description |
 |---|---|---|
 | `POST` | `/v1/register` | Register user via Telegram WebApp `initData` |
+| `POST` | `/v1/generate/text` | Generate text (`model`: `yandexgpt`, `gemini-flash`, `openai`) |
 | `GET` | `/v1/users/telegram/{telegram_id}` | Get profile by Telegram ID |
 
 All requests/responses are JSON. See `api/service.swagger.json` or the Swagger UI for full schema.

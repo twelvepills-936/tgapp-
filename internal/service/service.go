@@ -116,6 +116,8 @@ func (s *service) CreatePromptHistory(ctx context.Context, req *api.CreatePrompt
 		switch {
 		case errors.Is(err, ucModels.ErrInvalidInput):
 			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%s: %s", errorcodes.InvalidArgument, err.Error()))
+		case errors.Is(err, ucModels.ErrProfileNotFound):
+			return nil, status.Error(codes.NotFound, fmt.Sprintf("%s: %s", errorcodes.ProfileNotFound, ucModels.ErrProfileNotFound.Error()))
 		default:
 			return nil, mapProfileLookupError(err)
 		}

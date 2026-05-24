@@ -1,0 +1,5 @@
+version: v1
+directories:
+  - api
+  - third_party/googleapis
+  - third_party/grpc-gateway

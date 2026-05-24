@@ -207,17 +207,25 @@ func (uc *useCase) SavePromptHistory(ctx context.Context, input ucModels.SavePro
 		return ucModels.SavePromptHistoryOutput{}, err
 	}
 
-	profile, err := uc.repo.GetProfileByTelegramID(ctx, nil, input.TelegramID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ucModels.SavePromptHistoryOutput{}, ucModels.ErrProfileNotFound
-		}
-		return ucModels.SavePromptHistoryOutput{}, err
-	}
-
 	category := input.Category
 	if category == "" {
 		category = "general"
+	}
+
+	profile, err := uc.repo.GetProfileByTelegramID(ctx, nil, input.TelegramID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			if uc.skipRegistrationCheck {
+				return ucModels.SavePromptHistoryOutput{Item: ucModels.PromptHistoryItem{
+					Prompt:    input.Prompt,
+					Category:  category,
+					Model:     input.Model,
+					CreatedAt: time.Now().Format("2006-01-02 15:04"),
+				}}, nil
+			}
+			return ucModels.SavePromptHistoryOutput{}, ucModels.ErrProfileNotFound
+		}
+		return ucModels.SavePromptHistoryOutput{}, err
 	}
 
 	item := repoModels.PromptHistory{
@@ -225,6 +233,7 @@ func (uc *useCase) SavePromptHistory(ctx context.Context, input ucModels.SavePro
 		TelegramID: input.TelegramID,
 		Prompt:     input.Prompt,
 		Category:   category,
+		Model:      input.Model,
 	}
 
 	id, err := uc.repo.CreatePromptHistory(ctx, nil, item)
@@ -280,6 +289,7 @@ func mapPromptHistoryItem(item repoModels.PromptHistory) ucModels.PromptHistoryI
 		ID:        item.ID,
 		Prompt:    item.Prompt,
 		Category:  item.Category,
+		Model:     item.Model,
 		CreatedAt: item.CreatedAt.Format("2006-01-02 15:04"),
 	}
 }

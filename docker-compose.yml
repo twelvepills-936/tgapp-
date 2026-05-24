@@ -4,30 +4,51 @@ services:
     container_name: tgapp_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: myapp_db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-myapp_db}
     ports:
-      - "127.0.0.1:5433:5432"
+      # Host 5433 avoids conflict with a local PostgreSQL on 5432 (pgAdmin, DBeaver, go run).
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    command: >
-      postgres
-      -c listen_addresses=*
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d myapp_db"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-myapp_db}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: tgapp_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "127.0.0.1:${PGADMIN_HOST_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./deployment/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./deployment/pgadmin/pgpass:/pgpass:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   migrate:
     profiles: ["tools"]
     image: flyway/flyway:10-alpine
     container_name: tgapp_migrate
     command: >
-      -url=jdbc:postgresql://postgres:5432/myapp_db
-      -user=postgres
-      -password=postgres
+      -url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-myapp_db}
+      -user=${POSTGRES_USER:-postgres}
+      -password=${POSTGRES_PASSWORD:-postgres}
       -locations=filesystem:/flyway/sql
       -connectRetries=10
       migrate
@@ -39,3 +60,4 @@ services:
 
 volumes:
   postgres_data:
+  pgadmin_data:

@@ -34,9 +34,9 @@ test.cover:
 fmt:
 	gofmt -w .
 
-# Start Postgres and apply migrations
+# Start Postgres, pgAdmin, and apply migrations
 db.up:
-	docker compose up -d postgres
+	docker compose up -d postgres pgadmin
 	docker compose run --rm migrate
 
 # Run migrations manually

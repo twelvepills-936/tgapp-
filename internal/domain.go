@@ -20,6 +20,7 @@ type Repository interface {
 	ListReferralsByTelegramID(ctx context.Context, tx pgx.Tx, telegramID string) ([]repoModels.Referral, error)
 	CreatePromptHistory(ctx context.Context, tx pgx.Tx, item repoModels.PromptHistory) (int64, error)
 	ListPromptHistoryByTelegramID(ctx context.Context, tx pgx.Tx, telegramID string, limit int32) ([]repoModels.PromptHistory, error)
+	DeductWalletBalance(ctx context.Context, tx pgx.Tx, profileID int64, amount int64, description string) error
 }
 
 type UseCase interface {
@@ -29,4 +30,6 @@ type UseCase interface {
 	GetReferralsByTelegramID(ctx context.Context, telegramID string) (ucModels.GetReferralsOutput, error)
 	SavePromptHistory(ctx context.Context, input ucModels.SavePromptHistoryInput) (ucModels.SavePromptHistoryOutput, error)
 	GetPromptHistoryByTelegramID(ctx context.Context, telegramID string) (ucModels.GetPromptHistoryOutput, error)
+	GenerateText(ctx context.Context, input ucModels.GenerateTextInput) (ucModels.GenerateTextOutput, error)
+	GenerateImage(ctx context.Context, input ucModels.GenerateImageInput) (ucModels.GenerateImageOutput, error)
 }
