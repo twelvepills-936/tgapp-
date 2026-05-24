@@ -16,6 +16,7 @@ func (uc *useCase) GenerateText(ctx context.Context, input ucModels.GenerateText
 	if uc.skipRegistrationCheck && input.TelegramID == "" {
 		input.TelegramID = "dev"
 	}
+	input = normalizeGenerateTextInput(input)
 	if err := input.Validate(requireTelegramID); err != nil {
 		return ucModels.GenerateTextOutput{}, err
 	}
@@ -92,6 +93,24 @@ func (uc *useCase) GenerateText(ctx context.Context, input ucModels.GenerateText
 		Model:      model,
 		TokensUsed: tokensUsed,
 	}, nil
+}
+
+func normalizeGenerateTextInput(in ucModels.GenerateTextInput) ucModels.GenerateTextInput {
+	prepared := generator.PrepareTextInput(generator.TextGenerateInput{
+		Prompt:   in.Prompt,
+		Category: in.Category,
+		Messages: toGeneratorMessages(in.Messages),
+	})
+	in.Prompt = prepared.Prompt
+	if len(prepared.Messages) == 0 {
+		in.Messages = nil
+		return in
+	}
+	in.Messages = make([]ucModels.ChatMessageInput, len(prepared.Messages))
+	for i, m := range prepared.Messages {
+		in.Messages[i] = ucModels.ChatMessageInput{Role: m.Role, Content: m.Content}
+	}
+	return in
 }
 
 func toGeneratorMessages(in []ucModels.ChatMessageInput) []generator.ChatMessage {

@@ -7,5 +7,6 @@ const (
 	Internal                 = "INTERNAL"
 	InvalidArgument          = "INVALID_ARGUMENT"
 	AIProviderError          = "AI_PROVIDER_ERROR"
+	ContentPolicy            = "CONTENT_POLICY"
 	InsufficientBalance      = "INSUFFICIENT_BALANCE"
 )

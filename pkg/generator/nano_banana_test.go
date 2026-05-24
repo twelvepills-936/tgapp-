@@ -33,7 +33,7 @@ func TestNanoBananaClient_GenerateImage(t *testing.T) {
 		BaseURL:    srv.URL,
 	})
 
-	res, err := gen.GenerateImage(context.Background(), "a red circle", "image")
+	res, err := gen.GenerateImage(context.Background(), ModelNanoBanana, ImageGenerateInput{Prompt: "a red circle", Category: "image"})
 	if err != nil {
 		t.Fatalf("GenerateImage: %v", err)
 	}

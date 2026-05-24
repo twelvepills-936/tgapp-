@@ -58,6 +58,7 @@ func NormalizeChatRole(role string) string {
 
 func textSystemPrompt(category string, multiTurn bool) string {
 	system := "Ты помощник Telegram mini app. Пиши готовый текст на языке запроса пользователя."
+	system += " Формулы оформляй в LaTeX: inline через \\( … \\) или $ … $, блочные через \\[ … \\] или $$ … $$. Структуру ответа оформляй Markdown (заголовки, списки, **выделение**)."
 	if multiTurn {
 		system += " Учитывай всю предыдущую переписку: сохраняй тему, стиль и факты из диалога; не начинай ответ с нуля, если пользователь продолжает беседу."
 	}

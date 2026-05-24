@@ -3,15 +3,17 @@ package generator
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"gitlab16.skiftrade.kz/templates/go/pkg/config"
 )
 
 // ModelRouter dispatches generation to a provider by model slug.
 type ModelRouter struct {
-	yandex *yandexClient
-	gemini *geminiClient
-	openai *openAIClient
+	yandex   *yandexClient
+	deepseek *deepSeekClient
+	gemini   *geminiClient
+	openai   *openAIClient
 }
 
 // NewModelRouter wires providers from configuration (nil if not configured).
@@ -19,6 +21,9 @@ func NewModelRouter(yandex config.ConfigYandex, gemini config.ConfigGemini, open
 	r := &ModelRouter{}
 	if yandex.APIKey != "" && yandex.FolderID != "" {
 		r.yandex = newYandexClient(yandex)
+		if strings.TrimSpace(yandex.DeepSeekModel) != "" {
+			r.deepseek = newDeepSeekClient(yandex)
+		}
 	}
 	if gemini.APIKey != "" {
 		r.gemini = newGeminiClient(gemini)
@@ -42,6 +47,11 @@ func (r *ModelRouter) Generate(ctx context.Context, model string, in TextGenerat
 			return Result{}, newProviderError("yandexgpt", "YANDEX_GPT_API_KEY and YANDEX_GPT_FOLDER_ID are not configured")
 		}
 		return r.yandex.Generate(ctx, in)
+	case ModelDeepSeek:
+		if r.deepseek == nil {
+			return Result{}, newProviderError("deepseek", "YANDEX_GPT_API_KEY, YANDEX_GPT_FOLDER_ID and YANDEX_DEEPSEEK_MODEL are not configured")
+		}
+		return r.deepseek.Generate(ctx, in)
 	case ModelGeminiFlash:
 		if r.gemini == nil {
 			return Result{}, newProviderError("gemini", "GEMINI_API_KEY is not configured")

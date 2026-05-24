@@ -102,10 +102,10 @@ func (i *SavePromptHistoryInput) Validate() error {
 	if i.Prompt == "" {
 		return fmt.Errorf("%w: prompt is required", ErrInvalidInput)
 	}
-	if len(i.Prompt) > 4000 {
+	if len(i.Prompt) > MaxGeneratePromptBytes {
 		return fmt.Errorf("%w: prompt too long", ErrInvalidInput)
 	}
-	if len(i.Category) > 100 {
+	if len(i.Category) > MaxGenerateCategoryBytes {
 		return fmt.Errorf("%w: category too long", ErrInvalidInput)
 	}
 	return nil
@@ -147,24 +147,24 @@ func (i *GenerateTextInput) Validate(requireTelegramID bool) error {
 	if i.Prompt == "" {
 		return fmt.Errorf("%w: prompt is required", ErrInvalidInput)
 	}
-	if len(i.Prompt) > 4000 {
+	if len(i.Prompt) > MaxGeneratePromptBytes {
 		return fmt.Errorf("%w: prompt too long", ErrInvalidInput)
 	}
-	if len(i.Category) > 100 {
+	if len(i.Category) > MaxGenerateCategoryBytes {
 		return fmt.Errorf("%w: category too long", ErrInvalidInput)
 	}
-	if len(i.Model) > 50 {
+	if len(i.Model) > MaxGenerateModelBytes {
 		return fmt.Errorf("%w: model too long", ErrInvalidInput)
 	}
 	for idx, m := range i.Messages {
-		if len(m.Content) > 4000 {
+		if len(m.Content) > MaxGenerateMessageBytes {
 			return fmt.Errorf("%w: message %d too long", ErrInvalidInput, idx)
 		}
 		if len(m.Role) > 20 {
 			return fmt.Errorf("%w: message %d role too long", ErrInvalidInput, idx)
 		}
 	}
-	if len(i.Messages) > 40 {
+	if len(i.Messages) > MaxGenerateMessagesCount {
 		return fmt.Errorf("%w: too many messages in context", ErrInvalidInput)
 	}
 	return nil
@@ -181,6 +181,7 @@ type GenerateImageInput struct {
 	Prompt     string
 	Category   string
 	Model      string
+	Messages   []ChatMessageInput
 }
 
 func (i *GenerateImageInput) Validate(requireTelegramID bool) error {
@@ -190,14 +191,25 @@ func (i *GenerateImageInput) Validate(requireTelegramID bool) error {
 	if i.Prompt == "" {
 		return fmt.Errorf("%w: prompt is required", ErrInvalidInput)
 	}
-	if len(i.Prompt) > 4000 {
+	if len(i.Prompt) > MaxGeneratePromptBytes {
 		return fmt.Errorf("%w: prompt too long", ErrInvalidInput)
 	}
-	if len(i.Category) > 100 {
+	if len(i.Category) > MaxGenerateCategoryBytes {
 		return fmt.Errorf("%w: category too long", ErrInvalidInput)
 	}
-	if len(i.Model) > 50 {
+	if len(i.Model) > MaxGenerateModelBytes {
 		return fmt.Errorf("%w: model too long", ErrInvalidInput)
+	}
+	for idx, m := range i.Messages {
+		if len(m.Content) > MaxGenerateMessageBytes {
+			return fmt.Errorf("%w: message %d too long", ErrInvalidInput, idx)
+		}
+		if len(m.Role) > 20 {
+			return fmt.Errorf("%w: message %d role too long", ErrInvalidInput, idx)
+		}
+	}
+	if len(i.Messages) > MaxGenerateMessagesCount {
+		return fmt.Errorf("%w: too many messages in context", ErrInvalidInput)
 	}
 	return nil
 }

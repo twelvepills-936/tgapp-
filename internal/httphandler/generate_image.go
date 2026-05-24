@@ -25,11 +25,12 @@ func NewGenerateImageHandler(uc internal.UseCase) *GenerateImageHandler {
 }
 
 type generateImageRequest struct {
-	TelegramID      string `json:"telegramId"`
-	TelegramIDSnake string `json:"telegram_id"`
-	Prompt          string `json:"prompt"`
-	Category        string `json:"category"`
-	Model           string `json:"model"`
+	TelegramID      string               `json:"telegramId"`
+	TelegramIDSnake string               `json:"telegram_id"`
+	Prompt          string               `json:"prompt"`
+	Category        string               `json:"category"`
+	Model           string               `json:"model"`
+	Messages        []chatMessageRequest `json:"messages"`
 }
 
 type generateImageData struct {
@@ -66,11 +67,20 @@ func (h *GenerateImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		telegramID = strings.TrimSpace(req.TelegramIDSnake)
 	}
 
+	messages := make([]ucModels.ChatMessageInput, 0, len(req.Messages))
+	for _, m := range req.Messages {
+		messages = append(messages, ucModels.ChatMessageInput{
+			Role:    strings.TrimSpace(m.Role),
+			Content: strings.TrimSpace(m.Content),
+		})
+	}
+
 	out, err := h.uc.GenerateImage(r.Context(), ucModels.GenerateImageInput{
 		TelegramID: telegramID,
 		Prompt:     strings.TrimSpace(req.Prompt),
 		Category:   strings.TrimSpace(req.Category),
 		Model:      strings.TrimSpace(req.Model),
+		Messages:   messages,
 	})
 	if err != nil {
 		slog.ErrorContext(r.Context(), "generate image failed", slog.String("error", err.Error()))
@@ -90,7 +100,7 @@ func writeGenerateImageError(w http.ResponseWriter, err error) {
 	case errors.Is(err, generator.ErrImageGeneratorUnavailable):
 		writeJSON(w, http.StatusServiceUnavailable, errorResponse{
 			Code:    errorcodes.AIProviderError,
-			Message: "image generation is not configured (set GEMINI_API_KEY)",
+			Message: "image generation is not configured (set GEMINI_API_KEY for nano-banana or YANDEX_GPT_* for alice-ai-art)",
 		})
 	case errors.Is(err, ucModels.ErrProfileNotFound):
 		writeJSON(w, http.StatusNotFound, errorResponse{
@@ -106,6 +116,11 @@ func writeGenerateImageError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusBadRequest, errorResponse{
 			Code:    errorcodes.InvalidArgument,
 			Message: err.Error(),
+		})
+	case errors.Is(err, generator.ErrContentPolicy):
+		writeJSON(w, http.StatusBadRequest, errorResponse{
+			Code:    errorcodes.ContentPolicy,
+			Message: aiProviderErrorMessage(err),
 		})
 	case errors.Is(err, generator.ErrProvider):
 		writeJSON(w, http.StatusServiceUnavailable, errorResponse{

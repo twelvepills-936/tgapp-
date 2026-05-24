@@ -50,8 +50,8 @@ func LoadConfigFromEnv() Config {
 	return Config{
 		GRPCPort:     getenvInt("APP_GRPC_PORT", 8091),
 		HTTPPort:     getenvInt("APP_HTTP_PORT", 8090),
-		ReadTimeout:  getenvDuration("SERVER_READ_TIMEOUT", 30*time.Second),
-		WriteTimeout: getenvDuration("SERVER_WRITE_TIMEOUT", 30*time.Second),
+		ReadTimeout:  getenvDuration("SERVER_READ_TIMEOUT", 120*time.Second),
+		WriteTimeout: getenvDuration("SERVER_WRITE_TIMEOUT", 120*time.Second),
 		IdleTimeout:  getenvDuration("SERVER_IDLE_TIMEOUT", 60*time.Second),
 		CORSOrigins:  getenvSlice("CORS_ALLOWED_ORIGINS", []string{"*"}),
 	}

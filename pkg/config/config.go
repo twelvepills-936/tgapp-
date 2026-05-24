@@ -71,11 +71,16 @@ type ConfigGemini struct {
 }
 
 type ConfigYandex struct {
-	APIKey   string
-	FolderID string
-	Model    string
-	ModelURI string
-	BaseURL  string
+	APIKey                 string
+	FolderID               string
+	Model                  string
+	ModelURI               string
+	BaseURL                string
+	DeepSeekModel          string
+	AliceAIArtModel        string
+	ResponsesBaseURL       string
+	ImageSize              string
+	TextMaxOutputTokens    int
 }
 
 func getenv(key, def string) string {
@@ -170,13 +175,32 @@ func LoadAIConfig() ConfigAI {
 }
 
 func LoadYandexConfig() ConfigYandex {
-	return ConfigYandex{
-		APIKey:   getenv("YANDEX_GPT_API_KEY", ""),
-		FolderID: getenv("YANDEX_GPT_FOLDER_ID", ""),
-		Model:    getenv("YANDEX_GPT_MODEL", "yandexgpt/latest"),
-		ModelURI: getenv("YANDEX_GPT_MODEL_URI", ""),
-		BaseURL:  getenv("YANDEX_GPT_BASE_URL", ""),
+	deepSeek := strings.TrimSpace(getenv("YANDEX_DEEPSEEK_MODEL", ""))
+	if deepSeek == "" {
+		deepSeek = strings.TrimSpace(getenv("YANDEX_CLOUD_MODEL", "deepseek-v32/latest"))
 	}
+	return ConfigYandex{
+		APIKey:              getenv("YANDEX_GPT_API_KEY", ""),
+		FolderID:            getenv("YANDEX_GPT_FOLDER_ID", ""),
+		Model:               getenv("YANDEX_GPT_MODEL", "yandexgpt/latest"),
+		ModelURI:            getenv("YANDEX_GPT_MODEL_URI", ""),
+		BaseURL:             getenv("YANDEX_GPT_BASE_URL", ""),
+		DeepSeekModel:       deepSeek,
+		AliceAIArtModel:     strings.TrimSpace(getenv("YANDEX_ALICE_AI_ART_MODEL", "aliceai-image-art-3.0/latest")),
+		ResponsesBaseURL:    getenv("YANDEX_RESPONSES_BASE_URL", "https://ai.api.cloud.yandex.net/v1"),
+		ImageSize:           getenv("YANDEX_IMAGE_SIZE", "1024x1024"),
+		TextMaxOutputTokens: clampTextMaxOutputTokens(getenvInt("AI_TEXT_MAX_OUTPUT_TOKENS", 4096)),
+	}
+}
+
+func clampTextMaxOutputTokens(n int) int {
+	if n < 256 {
+		return 256
+	}
+	if n > 8192 {
+		return 8192
+	}
+	return n
 }
 
 func LoadGeminiConfig() ConfigGemini {
@@ -189,8 +213,13 @@ func LoadGeminiConfig() ConfigGemini {
 }
 
 func LoadAppConfig() ConfigApp {
+	// Railway injects PORT; APP_HTTP_PORT overrides for local/docker.
+	httpPort := getenvInt("APP_HTTP_PORT", 0)
+	if httpPort == 0 {
+		httpPort = getenvInt("PORT", 8090)
+	}
 	return ConfigApp{
-		HTTPPort:    getenvInt("APP_HTTP_PORT", 8090),
+		HTTPPort:    httpPort,
 		GRPCPort:    getenvInt("APP_GRPC_PORT", 8091),
 		Environment: getenv("ENVIRONMENT", "development"),
 		LogLevel:    getenv("LOG_LEVEL", "info"),
@@ -207,8 +236,8 @@ func SkipRegistrationCheck() bool {
 
 func LoadServerConfig() ConfigServer {
 	return ConfigServer{
-		ReadTimeout:  getenvDuration("SERVER_READ_TIMEOUT", 30*time.Second),
-		WriteTimeout: getenvDuration("SERVER_WRITE_TIMEOUT", 30*time.Second),
+		ReadTimeout:  getenvDuration("SERVER_READ_TIMEOUT", 120*time.Second),
+		WriteTimeout: getenvDuration("SERVER_WRITE_TIMEOUT", 120*time.Second),
 		IdleTimeout:  getenvDuration("SERVER_IDLE_TIMEOUT", 60*time.Second),
 	}
 }

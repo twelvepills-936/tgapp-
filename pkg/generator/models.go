@@ -11,6 +11,7 @@ var ErrUnsupportedModel = errors.New("unsupported model")
 
 const (
 	ModelYandexGPT   = "yandexgpt"
+	ModelDeepSeek    = "deepseek"
 	ModelGeminiFlash = "gemini-flash"
 	ModelOpenAI      = "openai"
 )
@@ -21,6 +22,7 @@ const DefaultModel = ModelYandexGPT
 // TokenCost is the in-app token price per generation request.
 var TokenCost = map[string]int64{
 	ModelYandexGPT:   1,
+	ModelDeepSeek:    2,
 	ModelGeminiFlash: 1,
 	ModelOpenAI:      2,
 }
@@ -32,8 +34,10 @@ func NormalizeModel(model string) (string, error) {
 		return DefaultModel, nil
 	}
 	switch m {
-	case ModelYandexGPT, ModelGeminiFlash, ModelOpenAI:
+	case ModelYandexGPT, ModelDeepSeek, ModelGeminiFlash, ModelOpenAI:
 		return m, nil
+	case "deepseek-v32", "deepseek-v32/latest":
+		return ModelDeepSeek, nil
 	default:
 		return "", fmt.Errorf("%w: %q", ErrUnsupportedModel, model)
 	}

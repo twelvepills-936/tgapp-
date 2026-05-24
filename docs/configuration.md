@@ -15,9 +15,11 @@ All settings are read from environment variables. Copy `.env` and adjust for you
 
 | Variable | Default | Description |
 |---|---|---|
-| `SERVER_READ_TIMEOUT` | `30s` | Max time to read full request |
-| `SERVER_WRITE_TIMEOUT` | `30s` | Max time to write full response |
+| `SERVER_READ_TIMEOUT` | `120s` | Max time to read full request |
+| `SERVER_WRITE_TIMEOUT` | `120s` | Max time to write full response (must be ≥ AI provider HTTP timeout, ~90s) |
 | `SERVER_IDLE_TIMEOUT` | `60s` | Max keep-alive idle time |
+
+If `SERVER_WRITE_TIMEOUT` is too low (e.g. `30s`), long text generation (DeepSeek, Gemini) is cut off with `context canceled` and the dev proxy may return **502 Bad Gateway**.
 
 ## PostgreSQL
 
@@ -53,11 +55,12 @@ All settings are read from environment variables. Copy `.env` and adjust for you
 
 | `model` slug | Provider | ENV |
 |---|---|---|
-| `yandexgpt` (default) | YandexGPT | `YANDEX_GPT_*` |
+| `yandexgpt` (default) | YandexGPT (Foundation Models `/completion`) | `YANDEX_GPT_*` |
+| `deepseek` | DeepSeek via Yandex AI Studio (`/v1/responses`) | `YANDEX_GPT_*` + `YANDEX_DEEPSEEK_MODEL` |
 | `gemini-flash` | Google Gemini | `GEMINI_*` |
 | `openai` | OpenAI | `OPENAI_*` |
 
-Token cost per request (in-app wallet): `yandexgpt` = 1, `gemini-flash` = 1, `openai` = 2.
+Token cost per request (in-app wallet): `yandexgpt` = 1, `deepseek` = 2, `gemini-flash` = 1, `openai` = 2.
 
 ## YandexGPT
 
@@ -67,7 +70,15 @@ Token cost per request (in-app wallet): `yandexgpt` = 1, `gemini-flash` = 1, `op
 | `YANDEX_GPT_FOLDER_ID` | _(empty)_ | Folder ID for Foundation Models |
 | `YANDEX_GPT_MODEL` | `yandexgpt/latest` | Model path segment |
 | `YANDEX_GPT_MODEL_URI` | _(empty)_ | Full URI override, e.g. `gpt://folder/yandexgpt/latest` |
-| `YANDEX_GPT_BASE_URL` | _(empty)_ | API base override |
+| `YANDEX_GPT_BASE_URL` | _(empty)_ | Foundation Models API base override |
+| `YANDEX_DEEPSEEK_MODEL` | `deepseek-v32/latest` | DeepSeek model id in catalog (also reads `YANDEX_CLOUD_MODEL`) |
+| `YANDEX_RESPONSES_BASE_URL` | `https://ai.api.cloud.yandex.net/v1` | AI Studio Responses API base (DeepSeek) |
+
+DeepSeek uses the same `YANDEX_GPT_API_KEY` and `YANDEX_GPT_FOLDER_ID` as YandexGPT, but a different HTTP API (`POST /responses`). Request body: `model`, `instructions`, `input`, `max_output_tokens`.
+
+| `AI_TEXT_MAX_OUTPUT_TOKENS` | `4096` | Max completion tokens for YandexGPT and DeepSeek (256–8192). Was `2000` — long answers were cut off mid-text. |
+
+Chat history in `messages[]` is trimmed server-side (assistant turns to ~6k chars) so follow-up prompts like «построй схему HTTPS» do not fail with `message N too long` after a long previous answer.
 
 ## Gemini
 
@@ -79,7 +90,15 @@ Token cost per request (in-app wallet): `yandexgpt` = 1, `gemini-flash` = 1, `op
 | `GEMINI_API_BASE_URL` | _(empty)_ | Override API base (optional) |
 
 Text generation uses `POST /v1/generate/text` with `model=gemini-flash`.  
-Image generation (**Nano Banana**) uses `POST /v1/generate/image` with `model=nano-banana` (same `GEMINI_API_KEY`).
+Image generation uses `POST /v1/generate/image`:
+
+| `model` slug | Provider | Env |
+|---|---|---|
+| `nano-banana` | Gemini image | `GEMINI_API_KEY`, `GEMINI_IMAGE_MODEL` |
+| `alice-ai-art` | Alice AI ART (Yandex AI Studio) | `YANDEX_GPT_API_KEY`, `YANDEX_GPT_FOLDER_ID`, `YANDEX_ALICE_AI_ART_MODEL` |
+
+| `YANDEX_ALICE_AI_ART_MODEL` | `aliceai-image-art-3.0/latest` | Alice AI ART model id in catalog |
+| `YANDEX_IMAGE_SIZE` | `1024x1024` | Output size for Alice AI ART (`POST /v1/images/generations`) |
 
 ## OpenAI (other categories, optional)
 

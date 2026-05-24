@@ -23,21 +23,28 @@ func newYandexClient(cfg config.ConfigYandex) *yandexClient {
 		}
 		modelURI = fmt.Sprintf("gpt://%s/%s", cfg.FolderID, model)
 	}
+	maxOut := cfg.TextMaxOutputTokens
+	if maxOut <= 0 {
+		maxOut = DefaultMaxOutputTokens
+	}
+
 	return &yandexClient{
-		apiKey:   cfg.APIKey,
-		folderID: cfg.FolderID,
-		modelURI: modelURI,
-		baseURL:  strings.TrimRight(cfg.BaseURL, "/"),
-		client:   &http.Client{Timeout: 90 * time.Second},
+		apiKey:    cfg.APIKey,
+		folderID:  cfg.FolderID,
+		modelURI:  modelURI,
+		baseURL:   strings.TrimRight(cfg.BaseURL, "/"),
+		maxTokens: maxOut,
+		client:    &http.Client{Timeout: 90 * time.Second},
 	}
 }
 
 type yandexClient struct {
-	apiKey   string
-	folderID string
-	modelURI string
-	baseURL  string
-	client   *http.Client
+	apiKey    string
+	folderID  string
+	modelURI  string
+	baseURL   string
+	maxTokens int
+	client    *http.Client
 }
 
 type yandexCompletionRequest struct {
@@ -73,6 +80,8 @@ type yandexCompletionResponse struct {
 }
 
 func (c *yandexClient) Generate(ctx context.Context, in TextGenerateInput) (Result, error) {
+	in = PrepareTextInput(in)
+
 	baseURL := c.baseURL
 	if baseURL == "" {
 		baseURL = "https://llm.api.cloud.yandex.net/foundationModels/v1"
@@ -91,8 +100,8 @@ func (c *yandexClient) Generate(ctx context.Context, in TextGenerateInput) (Resu
 		ModelURI: c.modelURI,
 		CompletionOptions: yandexCompletionOpts{
 			Stream:      false,
-			Temperature: 0.5,
-			MaxTokens:   2000,
+			Temperature: 0.3,
+			MaxTokens:   c.maxTokens,
 		},
 		Messages: yandexMessages,
 	})
@@ -156,6 +165,9 @@ func parseYandexAPIError(raw []byte) string {
 		Error json.RawMessage `json:"error"`
 	}
 	if err := json.Unmarshal(raw, &envelope); err != nil || len(envelope.Error) == 0 {
+		return ""
+	}
+	if string(envelope.Error) == "null" {
 		return ""
 	}
 

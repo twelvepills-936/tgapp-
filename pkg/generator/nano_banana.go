@@ -77,14 +77,17 @@ type nanoBananaResponse struct {
 	} `json:"usageMetadata"`
 }
 
-func (c *nanoBananaClient) GenerateImage(ctx context.Context, prompt, category string) (ImageResult, error) {
+func (c *nanoBananaClient) GenerateImage(ctx context.Context, _ string, in ImageGenerateInput) (ImageResult, error) {
 	if c.apiKey == "" {
 		return ImageResult{}, ErrImageGeneratorUnavailable
 	}
 
-	text := strings.TrimSpace(prompt)
-	if category != "" {
-		text = fmt.Sprintf("Category: %s. %s", category, text)
+	text := strings.TrimSpace(BuildImagePrompt(in))
+	if text == "" {
+		return ImageResult{}, newProviderError("gemini-image", "empty prompt")
+	}
+	if in.Category != "" && !strings.HasPrefix(text, "Category:") {
+		text = fmt.Sprintf("Category: %s. %s", in.Category, text)
 	}
 
 	body, err := json.Marshal(nanoBananaRequest{

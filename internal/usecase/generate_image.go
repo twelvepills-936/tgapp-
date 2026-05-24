@@ -20,6 +20,7 @@ func (uc *useCase) GenerateImage(ctx context.Context, input ucModels.GenerateIma
 	if uc.skipRegistrationCheck && input.TelegramID == "" {
 		input.TelegramID = "dev"
 	}
+	input = normalizeGenerateImageInput(input)
 	if err := input.Validate(requireTelegramID); err != nil {
 		return ucModels.GenerateImageOutput{}, err
 	}
@@ -56,7 +57,11 @@ func (uc *useCase) GenerateImage(ctx context.Context, input ucModels.GenerateIma
 		category = "image"
 	}
 
-	result, err := uc.imageGenerator.GenerateImage(ctx, input.Prompt, category)
+	result, err := uc.imageGenerator.GenerateImage(ctx, model, generator.ImageGenerateInput{
+		Prompt:   input.Prompt,
+		Category: category,
+		Messages: toGeneratorMessages(input.Messages),
+	})
 	if err != nil {
 		return ucModels.GenerateImageOutput{}, mapGeneratorError(err)
 	}
@@ -96,4 +101,22 @@ func (uc *useCase) GenerateImage(ctx context.Context, input ucModels.GenerateIma
 		Model:      model,
 		TokensUsed: tokensUsed,
 	}, nil
+}
+
+func normalizeGenerateImageInput(in ucModels.GenerateImageInput) ucModels.GenerateImageInput {
+	prepared := generator.PrepareTextInput(generator.TextGenerateInput{
+		Prompt:   in.Prompt,
+		Category: in.Category,
+		Messages: toGeneratorMessages(in.Messages),
+	})
+	in.Prompt = prepared.Prompt
+	if len(prepared.Messages) == 0 {
+		in.Messages = nil
+		return in
+	}
+	in.Messages = make([]ucModels.ChatMessageInput, len(prepared.Messages))
+	for i, m := range prepared.Messages {
+		in.Messages[i] = ucModels.ChatMessageInput{Role: m.Role, Content: m.Content}
+	}
+	return in
 }

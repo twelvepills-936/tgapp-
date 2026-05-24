@@ -55,7 +55,7 @@ func main() {
 	repo := repository.NewRepository(pool)
 
 	modelRouter := generator.NewModelRouter(addConfig.Yandex, addConfig.Gemini, addConfig.AI)
-	imageGen := generator.NewNanoBananaClient(addConfig.Gemini)
+	imageGen := generator.NewImageRouter(addConfig.Yandex, addConfig.Gemini)
 	uc := usecase.NewUseCase(repo, modelRouter, imageGen, usecase.UseCaseOptions{
 		SkipRegistrationCheck: config.SkipRegistrationCheck(),
 	})

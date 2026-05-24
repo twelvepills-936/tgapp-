@@ -128,6 +128,11 @@ func writeGenerateError(w http.ResponseWriter, err error) {
 			Code:    errorcodes.InvalidArgument,
 			Message: err.Error(),
 		})
+	case errors.Is(err, generator.ErrContentPolicy):
+		writeJSON(w, http.StatusBadRequest, errorResponse{
+			Code:    errorcodes.ContentPolicy,
+			Message: aiProviderErrorMessage(err),
+		})
 	case errors.Is(err, generator.ErrProvider):
 		writeJSON(w, http.StatusServiceUnavailable, errorResponse{
 			Code:    errorcodes.AIProviderError,
@@ -148,7 +153,7 @@ func writeGenerateError(w http.ResponseWriter, err error) {
 func aiProviderErrorMessage(err error) string {
 	var pe *generator.ProviderError
 	if errors.As(err, &pe) {
-		return pe.Error()
+		return pe.Message
 	}
 	if os.Getenv("ENVIRONMENT") == "development" {
 		return err.Error()
