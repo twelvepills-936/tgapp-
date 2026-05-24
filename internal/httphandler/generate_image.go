@@ -47,7 +47,7 @@ func (h *GenerateImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Allow", http.MethodPost)
 		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{
 			Code:    errorcodes.InvalidArgument,
-			Message: "method not allowed",
+			Message: "use POST /v1/generate/image with JSON body (got " + r.Method + ")",
 		})
 		return
 	}

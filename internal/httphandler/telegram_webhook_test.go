@@ -63,10 +63,20 @@ func TestTelegramWebhookHandler_ServiceUnavailable(t *testing.T) {
 	}
 }
 
-func TestTelegramWebhookHandler_MethodNotAllowed(t *testing.T) {
+func TestTelegramWebhookHandler_GET_OK(t *testing.T) {
 	h := NewTelegramWebhookHandler(nil)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, telegramWebhookPath, nil)
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d", rec.Code)
+	}
+}
+
+func TestTelegramWebhookHandler_MethodNotAllowed(t *testing.T) {
+	h := NewTelegramWebhookHandler(nil)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, telegramWebhookPath, nil)
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("status = %d", rec.Code)

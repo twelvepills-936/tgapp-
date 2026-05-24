@@ -31,8 +31,17 @@ func NewTelegramWebhookHandler(b *bot.Bot) *TelegramWebhookHandler {
 }
 
 func (h *TelegramWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.Header().Set("Allow", http.MethodPost)
+	switch r.Method {
+	case http.MethodGet, http.MethodHead:
+		// Health check / mistaken Mini App URL — do not return 405 plain text.
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok":true,"endpoint":"telegram-webhook","usage":"POST only"}`))
+		return
+	case http.MethodPost:
+		// continue below
+	default:
+		w.Header().Set("Allow", "POST, GET, HEAD")
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}

@@ -57,10 +57,14 @@ type errorResponse struct {
 
 func (h *GenerateTextHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
+		slog.WarnContext(r.Context(), "generate text: wrong HTTP method",
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+		)
 		w.Header().Set("Allow", http.MethodPost)
 		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{
 			Code:    errorcodes.InvalidArgument,
-			Message: "method not allowed",
+			Message: "use POST /v1/generate/text with JSON body (got " + r.Method + ")",
 		})
 		return
 	}

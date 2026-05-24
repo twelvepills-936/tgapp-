@@ -75,7 +75,7 @@ func main() {
 	rootMux.Handle("/v1/generate/image", httphandler.NewGenerateImageHandler(uc))
 	rootMux.Handle("/v1/telegram/webhook", httphandler.NewTelegramWebhookHandler(tgBot))
 	rootMux.Handle("/", application.ServeMux)
-	application.SetHTTPRootHandler(rootMux)
+	application.SetHTTPRootHandler(httphandler.NormalizePath(rootMux))
 
 	err = application.Init(ctx)
 	if err != nil {
