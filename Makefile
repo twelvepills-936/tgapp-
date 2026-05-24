@@ -43,6 +43,10 @@ db.up:
 db.migrate:
 	docker compose run --rm migrate
 
+# Run migrations via Go (uses DATABASE_URL or PG_* from .env)
+db.migrate.go:
+	go run ./cmd/migrate
+
 # Stop and wipe all containers + volumes
 db.down:
 	docker compose down -v

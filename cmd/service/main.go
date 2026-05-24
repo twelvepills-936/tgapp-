@@ -8,6 +8,7 @@ import (
 
 	"gitlab16.skiftrade.kz/templates/go/internal/bot"
 	"gitlab16.skiftrade.kz/templates/go/internal/httphandler"
+	"gitlab16.skiftrade.kz/templates/go/internal/migrate"
 	"gitlab16.skiftrade.kz/templates/go/internal/repository"
 	repoModels "gitlab16.skiftrade.kz/templates/go/internal/repository/models"
 	"gitlab16.skiftrade.kz/templates/go/internal/service"
@@ -52,6 +53,16 @@ func main() {
 		return
 	}
 	defer pool.Close()
+
+	migrationsDir := migrate.ResolveDir()
+	if err := migrate.Apply(ctx, pool, migrationsDir); err != nil {
+		slog.ErrorContext(ctx, "failed to apply database migrations",
+			logger.ErrorAttr(err),
+			slog.String("dir", migrationsDir),
+		)
+		return
+	}
+
 	repo := repository.NewRepository(pool)
 
 	modelRouter := generator.NewModelRouter(addConfig.Yandex, addConfig.Gemini, addConfig.AI)
