@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"gitlab16.skiftrade.kz/templates/go/internal/bot"
 	"gitlab16.skiftrade.kz/templates/go/internal/httphandler"
@@ -37,8 +38,15 @@ func main() {
 
 	migrationsDir := migrate.ResolveDir()
 	_, migrationsStatErr := os.Stat(migrationsDir)
+	if p := os.Getenv("PORT"); p != "" && os.Getenv("APP_HTTP_PORT") != "" && p != os.Getenv("APP_HTTP_PORT") {
+		slog.WarnContext(ctx, "APP_HTTP_PORT is ignored when PORT is set (use PORT on Railway)",
+			slog.String("port", p),
+			slog.String("app_http_port", os.Getenv("APP_HTTP_PORT")),
+		)
+	}
 	slog.InfoContext(ctx, "starting CyberMate backend",
 		slog.Int("http_port", cfg.HTTPPort),
+		slog.String("port_env", os.Getenv("PORT")),
 		slog.Int("grpc_port", cfg.GRPCPort),
 		slog.String("environment", addConfig.App.Environment),
 		slog.Bool("database_url_set", addConfig.Postgres.DatabaseURL != ""),
@@ -66,6 +74,14 @@ func main() {
 			listenErr <- err
 		}
 	}()
+
+	listenCtx, listenCancel := context.WithTimeout(ctx, 15*time.Second)
+	if err := application.WaitHTTPListening(listenCtx); err != nil {
+		slog.ErrorContext(ctx, "HTTP server did not bind in time", logger.ErrorAttr(err))
+		os.Exit(1)
+	}
+	listenCancel()
+	slog.InfoContext(ctx, "HTTP port open, continuing startup")
 
 	pool, err := repository.NewPostgres(ctx, repoModels.ConfigPostgres(addConfig.Postgres))
 	if err != nil {

@@ -213,10 +213,10 @@ func LoadGeminiConfig() ConfigGemini {
 }
 
 func LoadAppConfig() ConfigApp {
-	// Railway injects PORT; APP_HTTP_PORT overrides for local/docker.
-	httpPort := getenvInt("APP_HTTP_PORT", 0)
+	// Railway injects PORT — it must win over APP_HTTP_PORT or healthchecks probe the wrong port.
+	httpPort := getenvInt("PORT", 0)
 	if httpPort == 0 {
-		httpPort = getenvInt("PORT", 8090)
+		httpPort = getenvInt("APP_HTTP_PORT", 8090)
 	}
 	return ConfigApp{
 		HTTPPort:    httpPort,

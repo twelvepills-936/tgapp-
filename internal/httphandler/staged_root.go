@@ -15,8 +15,22 @@ func NewStagedRoot() *StagedRoot {
 	return &StagedRoot{}
 }
 
+func isHealthRequest(r *http.Request) bool {
+	switch r.Method {
+	case http.MethodGet, http.MethodHead:
+	default:
+		return false
+	}
+	path := r.URL.Path
+	return path == "/health" || path == "/health/"
+}
+
 func (s *StagedRoot) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet && r.URL.Path == "/health" {
+	if isHealthRequest(r) {
+		if r.Method == http.MethodHead {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 		return
 	}

@@ -6,7 +6,8 @@ All settings are read from environment variables. Copy `.env` and adjust for you
 
 | Variable | Default | Description |
 |---|---|---|
-| `APP_HTTP_PORT` | `8090` | HTTP (REST gateway) port |
+| `PORT` | — | HTTP port on Railway (injected automatically; takes precedence) |
+| `APP_HTTP_PORT` | `8090` | HTTP port for local/docker when `PORT` is unset. **Do not set on Railway** if it differs from `PORT` — healthchecks will fail |
 | `APP_GRPC_PORT` | `8091` | gRPC port |
 | `ENVIRONMENT` | `development` | Runtime environment (`development` / `production`) |
 | `LOG_LEVEL` | `info` | Log level (`debug` / `info` / `warn` / `error`) |

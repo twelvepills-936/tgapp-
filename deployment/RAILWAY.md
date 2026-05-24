@@ -63,8 +63,16 @@ CyberMate backend listening on http://0.0.0.0:8080
 | Где | Что |
 |-----|-----|
 | Railway → Networking → Target port | **8080** (или Auto) |
-| Variables `APP_HTTP_PORT` | **удалить** |
+| Variables `APP_HTTP_PORT` | **удалить** (если задан 8090, а Railway шлёт healthcheck на `PORT`=8080 → `service unavailable`) |
 | Variables `PORT` | **не добавлять** (даёт Railway) |
+
+### Healthcheck: `Attempt #N failed with service unavailable`
+
+Railway проверяет **`PORT`** (часто 8080), а не `APP_HTTP_PORT`. В логах должно быть `http_port=8080` и `CyberMate backend listening`. Если `http_port=8090` — удалите `APP_HTTP_PORT` из Variables.
+
+Start Command: **`./bin/server`** (не `go run ./cmd/migrate`).
+
+Чтобы временно пройти деплой без healthcheck — уберите `healthcheckPath` из `railway.toml` (Settings → redeploy).
 
 Если в Mini App **Load failed**, а URL API верный — откройте в браузере:
 

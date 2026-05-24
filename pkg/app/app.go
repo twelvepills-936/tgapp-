@@ -3,11 +3,13 @@ package app
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -37,7 +39,9 @@ type App struct {
 	readTimeout  time.Duration
 	writeTimeout time.Duration
 	idleTimeout  time.Duration
-	corsOrigins  []string
+	corsOrigins    []string
+	httpListenOnce sync.Once
+	httpListenCh   chan struct{}
 }
 
 // SetHTTPRootHandler wraps the gRPC gateway (e.g. extra REST routes).
@@ -47,9 +51,13 @@ func (a *App) SetHTTPRootHandler(h http.Handler) {
 
 // LoadConfigFromEnv populates Config from environment variables.
 func LoadConfigFromEnv() Config {
+	httpPort := getenvInt("PORT", 0)
+	if httpPort == 0 {
+		httpPort = getenvInt("APP_HTTP_PORT", 8090)
+	}
 	return Config{
 		GRPCPort:     getenvInt("APP_GRPC_PORT", 8091),
-		HTTPPort:     getenvInt("APP_HTTP_PORT", 8090),
+		HTTPPort:     httpPort,
 		ReadTimeout:  getenvDuration("SERVER_READ_TIMEOUT", 120*time.Second),
 		WriteTimeout: getenvDuration("SERVER_WRITE_TIMEOUT", 120*time.Second),
 		IdleTimeout:  getenvDuration("SERVER_IDLE_TIMEOUT", 60*time.Second),
@@ -106,6 +114,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		writeTimeout: cfg.WriteTimeout,
 		idleTimeout:  cfg.IdleTimeout,
 		corsOrigins:  cfg.CORSOrigins,
+		httpListenCh: make(chan struct{}),
 	}, nil
 }
 
@@ -171,11 +180,33 @@ func (a *App) Run(ctx context.Context) error {
 		}
 	}()
 
-	fmt.Printf("CyberMate backend listening on http://0.0.0.0:%d (PORT env)\n", a.httpPort)
-	if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	listener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", a.httpPort))
+	if err != nil {
+		return fmt.Errorf("HTTP listen on 0.0.0.0:%d: %w", a.httpPort, err)
+	}
+	a.markHTTPListening()
+	slog.Info("CyberMate backend listening",
+		slog.String("addr", listener.Addr().String()),
+		slog.Int("http_port", a.httpPort),
+	)
+	if err := a.httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("HTTP serve error: %w", err)
 	}
 	return nil
+}
+
+func (a *App) markHTTPListening() {
+	a.httpListenOnce.Do(func() { close(a.httpListenCh) })
+}
+
+// WaitHTTPListening blocks until Run has bound the HTTP port or ctx is cancelled.
+func (a *App) WaitHTTPListening(ctx context.Context) error {
+	select {
+	case <-a.httpListenCh:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // corsMiddleware adds CORS headers and handles OPTIONS preflight requests.
