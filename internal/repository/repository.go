@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/url"
 	"strconv"
+	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/exaring/otelpgx"
@@ -86,6 +87,10 @@ func NewPostgres(ctx context.Context, c models.ConfigPostgres) (*pgxpool.Pool, e
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func getDSN(cfg models.ConfigPostgres) string {
+	if cfg.DatabaseURL != "" {
+		return mergeDSNPoolParams(cfg.DatabaseURL, cfg)
+	}
+
 	u := url.URL{
 		Scheme: "postgresql",
 		User:   url.UserPassword(cfg.User, cfg.Pass),
@@ -108,6 +113,35 @@ func getDSN(cfg models.ConfigPostgres) string {
 	u.RawQuery = q.Encode()
 
 	return u.String()
+}
+
+func mergeDSNPoolParams(dsn string, cfg models.ConfigPostgres) string {
+	parsed, err := url.Parse(dsn)
+	if err != nil {
+		return dsn
+	}
+
+	q := parsed.Query()
+	if q.Get("sslmode") == "" {
+		ssl := cfg.SSLMode
+		if ssl == "" {
+			ssl = "require"
+			if strings.Contains(parsed.Host, ".railway.internal") {
+				ssl = "disable"
+			}
+		}
+		q.Set("sslmode", ssl)
+	}
+	q.Set("pool_max_conns", strconv.FormatInt(cfg.PoolMaxConns, 10))
+	q.Set("pool_min_conns", strconv.FormatInt(cfg.PoolMinConns, 10))
+	q.Set("pool_max_conn_lifetime", cfg.PoolMaxConnLifeTime.String())
+	q.Set("pool_max_conn_idle_time", cfg.PoolMaxConnIdleTime.String())
+	q.Set("pool_health_check_period", cfg.PoolHealthCheckPeriod.String())
+	if cfg.SSLRootCert != "" {
+		q.Set("sslrootcert", cfg.SSLRootCert)
+	}
+	parsed.RawQuery = q.Encode()
+	return parsed.String()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -5,6 +5,7 @@ import (
 )
 
 type ConfigPostgres struct {
+	DatabaseURL string
 	Host        string
 	Port        string
 	User        string

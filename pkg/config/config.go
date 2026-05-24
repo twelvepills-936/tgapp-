@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -33,6 +34,8 @@ type ConfigServer struct {
 }
 
 type ConfigPostgres struct {
+	// DatabaseURL, when set (e.g. Railway DATABASE_URL), takes precedence over PG_* fields.
+	DatabaseURL string
 	Host        string
 	Port        string
 	User        string
@@ -211,6 +214,23 @@ func LoadServerConfig() ConfigServer {
 }
 
 func LoadPostgresConfig() ConfigPostgres {
+	pool := ConfigPostgres{
+		PoolStatPeriod:        getenvDuration("PG_POOL_STAT_PERIOD", 30*time.Second),
+		PoolMaxConns:          getenvInt64("PG_POOL_MAX_CONNS", 10),
+		PoolMinConns:          getenvInt64("PG_POOL_MIN_CONNS", 2),
+		PoolMaxConnLifeTime:   getenvDuration("PG_POOL_MAX_CONN_LIFETIME", time.Hour),
+		PoolMaxConnIdleTime:   getenvDuration("PG_POOL_MAX_CONN_IDLE_TIME", 30*time.Minute),
+		PoolHealthCheckPeriod: getenvDuration("PG_POOL_HEALTH_CHECK_PERIOD", time.Minute),
+		Debug:                 getenvBool("PG_DEBUG", false),
+		SSLRootCert:           getenv("PG_SSLROOTCERT", ""),
+	}
+
+	if dbURL := strings.TrimSpace(os.Getenv("DATABASE_URL")); dbURL != "" {
+		pool.DatabaseURL = dbURL
+		pool.SSLMode = getenv("PG_SSLMODE", "")
+		return pool
+	}
+
 	// Accept both PG_PASS and PG_PASSWORD; fall back to "postgres" for local dev.
 	pass := getenv("PG_PASS", "")
 	if pass == "" {
@@ -220,23 +240,13 @@ func LoadPostgresConfig() ConfigPostgres {
 		pass = "postgres"
 	}
 
-	return ConfigPostgres{
-		Host:        getenv("PG_HOST", "localhost"),
-		Port:        getenv("PG_PORT", "5432"),
-		User:        getenv("PG_USER", "postgres"),
-		Pass:        pass,
-		DBName:      getenv("PG_DBNAME", "myapp_db"),
-		SSLMode:     getenv("PG_SSLMODE", "disable"),
-		SSLRootCert: getenv("PG_SSLROOTCERT", ""),
-		Debug:       getenvBool("PG_DEBUG", false),
-
-		PoolStatPeriod:        getenvDuration("PG_POOL_STAT_PERIOD", 30*time.Second),
-		PoolMaxConns:          getenvInt64("PG_POOL_MAX_CONNS", 10),
-		PoolMinConns:          getenvInt64("PG_POOL_MIN_CONNS", 2),
-		PoolMaxConnLifeTime:   getenvDuration("PG_POOL_MAX_CONN_LIFETIME", time.Hour),
-		PoolMaxConnIdleTime:   getenvDuration("PG_POOL_MAX_CONN_IDLE_TIME", 30*time.Minute),
-		PoolHealthCheckPeriod: getenvDuration("PG_POOL_HEALTH_CHECK_PERIOD", time.Minute),
-	}
+	pool.Host = getenv("PG_HOST", "localhost")
+	pool.Port = getenv("PG_PORT", "5432")
+	pool.User = getenv("PG_USER", "postgres")
+	pool.Pass = pass
+	pool.DBName = getenv("PG_DBNAME", "myapp_db")
+	pool.SSLMode = getenv("PG_SSLMODE", "disable")
+	return pool
 }
 
 func LoadCORSConfig() ConfigCORS {

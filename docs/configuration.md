@@ -23,7 +23,8 @@ All settings are read from environment variables. Copy `.env` and adjust for you
 
 | Variable | Default | Description |
 |---|---|---|
-| `PG_HOST` | `localhost` | Database host |
+| `DATABASE_URL` | _(empty)_ | Full PostgreSQL URL (Railway/Heroku). **Overrides all `PG_*` host settings** when set |
+| `PG_HOST` | `localhost` | Database host (ignored if `DATABASE_URL` is set) |
 | `PG_PORT` | `5432` | Database port |
 | `PG_USER` | `postgres` | Database user |
 | `PG_PASSWORD` / `PG_PASS` | `postgres` | Database password |
