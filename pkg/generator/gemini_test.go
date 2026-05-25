@@ -22,7 +22,7 @@ func TestGeminiClient_Generate_OK(t *testing.T) {
 
 	gen := newGeminiClient(config.ConfigGemini{
 		APIKey:  "secret",
-		Model:   "gemini-2.0-flash",
+		Model:   "gemini-2.0-flash-lite",
 		BaseURL: srv.URL,
 	})
 

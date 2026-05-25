@@ -10,9 +10,16 @@ type ChatMessage struct {
 
 // TextGenerateInput is passed to text providers.
 type TextGenerateInput struct {
-	Prompt   string
-	Category string
-	Messages []ChatMessage
+	Prompt    string
+	Category  string
+	Messages  []ChatMessage
+	ImageData []byte
+	ImageMIME string
+}
+
+// HasImage reports whether a vision attachment is present.
+func (in TextGenerateInput) HasImage() bool {
+	return len(in.ImageData) > 0
 }
 
 // MergePromptAndMessages builds the final message list for providers.

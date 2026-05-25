@@ -42,6 +42,8 @@ type PromptHistory struct {
 	ProfileID  int64
 	TelegramID string
 	Prompt     string
+	Response   string
+	SessionID  string
 	Category   string
 	Model      string
 	CreatedAt  time.Time

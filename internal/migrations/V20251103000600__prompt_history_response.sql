@@ -1,0 +1,2 @@
+ALTER TABLE prompt_history
+    ADD COLUMN IF NOT EXISTS response TEXT NOT NULL DEFAULT '';

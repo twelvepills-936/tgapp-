@@ -103,6 +103,11 @@ func (f *fakeRepoProfile) ListPromptHistoryByTelegramID(ctx context.Context, tx 
 	return items, nil
 }
 
+func (f *fakeRepoProfile) DeletePromptHistoryByTelegramID(ctx context.Context, tx pgx.Tx, telegramID string) error {
+	delete(f.prompts, telegramID)
+	return nil
+}
+
 func (f *fakeRepoProfile) DeductWalletBalance(ctx context.Context, tx pgx.Tx, profileID int64, amount int64, description string) error {
 	for tid, w := range f.wallets {
 		if w.ProfileID == profileID {

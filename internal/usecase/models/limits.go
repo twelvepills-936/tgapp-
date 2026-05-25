@@ -7,4 +7,6 @@ const (
 	MaxGenerateCategoryBytes = 100
 	MaxGenerateModelBytes    = 50
 	MaxGenerateMessagesCount = 40
+	MaxGenerateImageBytes    = 6_000_000
+	MaxChatSessionIDBytes    = 64
 )

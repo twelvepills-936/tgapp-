@@ -41,15 +41,32 @@ func (r *ModelRouter) Generate(ctx context.Context, model string, in TextGenerat
 		return Result{}, err
 	}
 
+	in = EnsureVisionPrompt(in)
+	needsEnrich := in.HasImage() && slug != ModelGeminiFlash && slug != ModelOpenAI
+
 	switch slug {
 	case ModelYandexGPT:
 		if r.yandex == nil {
 			return Result{}, newProviderError("yandexgpt", "YANDEX_GPT_API_KEY and YANDEX_GPT_FOLDER_ID are not configured")
 		}
+		if needsEnrich {
+			var enrichErr error
+			in, enrichErr = r.enrichWithImageCaption(ctx, in)
+			if enrichErr != nil {
+				return Result{}, enrichErr
+			}
+		}
 		return r.yandex.Generate(ctx, in)
 	case ModelDeepSeek:
 		if r.deepseek == nil {
 			return Result{}, newProviderError("deepseek", "YANDEX_GPT_API_KEY, YANDEX_GPT_FOLDER_ID and YANDEX_DEEPSEEK_MODEL are not configured")
+		}
+		if needsEnrich {
+			var enrichErr error
+			in, enrichErr = r.enrichWithImageCaption(ctx, in)
+			if enrichErr != nil {
+				return Result{}, enrichErr
+			}
 		}
 		return r.deepseek.Generate(ctx, in)
 	case ModelGeminiFlash:

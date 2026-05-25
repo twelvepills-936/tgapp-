@@ -60,6 +60,13 @@ func (f *fakeUC) GetPromptHistoryByTelegramID(ctx context.Context, telegramID st
 	return ucModels.GetPromptHistoryOutput{Items: []ucModels.PromptHistoryItem{{ID: 1, Prompt: "Write a Telegram bio", Category: "profile"}}}, nil
 }
 
+func (f *fakeUC) ClearPromptHistoryByTelegramID(ctx context.Context, telegramID string) error {
+	if telegramID == "x" {
+		return ucModels.ErrProfileNotFound
+	}
+	return nil
+}
+
 func (f *fakeUC) GenerateImage(ctx context.Context, input ucModels.GenerateImageInput) (ucModels.GenerateImageOutput, error) {
 	return ucModels.GenerateImageOutput{}, nil
 }

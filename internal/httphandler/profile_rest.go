@@ -28,6 +28,7 @@ func (h *ProfileRESTHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/wallet/telegram/{telegramId}", h.getWallet)
 	mux.HandleFunc("GET /v1/referrals/telegram/{telegramId}", h.getReferrals)
 	mux.HandleFunc("GET /v1/prompts/history/telegram/{telegramId}", h.getPromptHistory)
+	mux.HandleFunc("DELETE /v1/prompts/history/telegram/{telegramId}", h.deletePromptHistory)
 	mux.HandleFunc("GET /health", h.health)
 }
 
@@ -144,6 +145,8 @@ func (h *ProfileRESTHandler) getPromptHistory(w http.ResponseWriter, r *http.Req
 		items = append(items, map[string]any{
 			"id":        item.ID,
 			"prompt":    item.Prompt,
+			"response":  item.Response,
+			"sessionId": item.SessionID,
 			"category":  item.Category,
 			"model":     item.Model,
 			"createdAt": item.CreatedAt,
@@ -151,6 +154,19 @@ func (h *ProfileRESTHandler) getPromptHistory(w http.ResponseWriter, r *http.Req
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+func (h *ProfileRESTHandler) deletePromptHistory(w http.ResponseWriter, r *http.Request) {
+	telegramID := strings.TrimSpace(r.PathValue("telegramId"))
+	ctx, cancel := context.WithTimeout(r.Context(), restQueryTimeout)
+	defer cancel()
+
+	if err := h.uc.ClearPromptHistoryByTelegramID(ctx, telegramID); err != nil {
+		writeProfileRESTError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
 
 func writeProfileRESTError(w http.ResponseWriter, err error) {

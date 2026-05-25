@@ -33,6 +33,9 @@ func (fakeGenerateUC) SavePromptHistory(context.Context, ucModels.SavePromptHist
 func (fakeGenerateUC) GetPromptHistoryByTelegramID(context.Context, string) (ucModels.GetPromptHistoryOutput, error) {
 	return ucModels.GetPromptHistoryOutput{}, nil
 }
+func (fakeGenerateUC) ClearPromptHistoryByTelegramID(context.Context, string) error {
+	return nil
+}
 func (fakeGenerateUC) GenerateImage(context.Context, ucModels.GenerateImageInput) (ucModels.GenerateImageOutput, error) {
 	return ucModels.GenerateImageOutput{}, nil
 }

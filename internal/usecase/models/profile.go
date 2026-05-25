@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 var (
@@ -92,8 +93,10 @@ type ReferralView struct {
 type SavePromptHistoryInput struct {
 	TelegramID string
 	Prompt     string
+	Response   string
 	Category   string
 	Model      string
+	SessionID  string
 }
 
 func (i *SavePromptHistoryInput) Validate() error {
@@ -109,6 +112,9 @@ func (i *SavePromptHistoryInput) Validate() error {
 	if len(i.Category) > MaxGenerateCategoryBytes {
 		return fmt.Errorf("%w: category too long", ErrInvalidInput)
 	}
+	if len(i.SessionID) > MaxChatSessionIDBytes {
+		return fmt.Errorf("%w: session_id too long", ErrInvalidInput)
+	}
 	return nil
 }
 
@@ -123,8 +129,10 @@ type GetPromptHistoryOutput struct {
 type PromptHistoryItem struct {
 	ID        int64
 	Prompt    string
+	Response  string
 	Category  string
 	Model     string
+	SessionID string
 	CreatedAt string
 }
 
@@ -134,19 +142,29 @@ type ChatMessageInput struct {
 }
 
 type GenerateTextInput struct {
-	TelegramID string
-	Prompt     string
-	Category   string
-	Model      string
-	Messages   []ChatMessageInput
+	TelegramID   string
+	Prompt       string
+	Category     string
+	Model        string
+	Messages     []ChatMessageInput
+	ImageBase64  string
+	ImageMIME    string
+	SessionID    string
 }
 
 func (i *GenerateTextInput) Validate(requireTelegramID bool) error {
 	if requireTelegramID && i.TelegramID == "" {
 		return fmt.Errorf("%w: telegram_id is required", ErrInvalidInput)
 	}
-	if i.Prompt == "" {
-		return fmt.Errorf("%w: prompt is required", ErrInvalidInput)
+	hasImage := strings.TrimSpace(i.ImageBase64) != ""
+	if i.Prompt == "" && !hasImage {
+		return fmt.Errorf("%w: prompt or image is required", ErrInvalidInput)
+	}
+	if len(i.ImageBase64) > MaxGenerateImageBytes {
+		return fmt.Errorf("%w: image too large", ErrInvalidInput)
+	}
+	if hasImage && len(i.ImageMIME) > 64 {
+		return fmt.Errorf("%w: image mime type too long", ErrInvalidInput)
 	}
 	if len(i.Prompt) > MaxGeneratePromptBytes {
 		return fmt.Errorf("%w: prompt too long", ErrInvalidInput)
@@ -167,6 +185,9 @@ func (i *GenerateTextInput) Validate(requireTelegramID bool) error {
 	}
 	if len(i.Messages) > MaxGenerateMessagesCount {
 		return fmt.Errorf("%w: too many messages in context", ErrInvalidInput)
+	}
+	if len(i.SessionID) > MaxChatSessionIDBytes {
+		return fmt.Errorf("%w: session_id too long", ErrInvalidInput)
 	}
 	return nil
 }

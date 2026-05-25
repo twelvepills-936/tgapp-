@@ -62,65 +62,82 @@ type chatResponse struct {
 }
 
 func (c *openAIClient) Generate(ctx context.Context, in TextGenerateInput) (Result, error) {
+	in = EnsureVisionPrompt(in)
 	turns := MergePromptAndMessages(in.Messages, in.Prompt)
 	multiTurn := len(turns) > 1
 	messages := PrependSystem(turns, englishSystemPrompt(in.Category, multiTurn))
 
-	chatMessages := make([]chatMessage, 0, len(messages))
-	for _, m := range messages {
-		chatMessages = append(chatMessages, chatMessage{Role: m.Role, Content: m.Content})
+	var body []byte
+	var err error
+	if in.HasImage() {
+		oaiMessages, buildErr := c.buildOpenAIChatMessages(messages, in.ImageData, in.ImageMIME)
+		if buildErr != nil {
+			return Result{}, buildErr
+		}
+		body, err = json.Marshal(map[string]any{
+			"model":    c.model,
+			"messages": oaiMessages,
+		})
+	} else {
+		chatMessages := make([]chatMessage, 0, len(messages))
+		for _, m := range messages {
+			chatMessages = append(chatMessages, chatMessage{Role: m.Role, Content: m.Content})
+		}
+		body, err = json.Marshal(chatRequest{
+			Model:    c.model,
+			Messages: chatMessages,
+		})
 	}
-
-	body, err := json.Marshal(chatRequest{
-		Model:    c.model,
-		Messages: chatMessages,
-	})
 	if err != nil {
 		return Result{}, err
 	}
 
+	text, tokens, err := c.postChatCompletions(ctx, body)
+	if err != nil {
+		return Result{}, err
+	}
+	if tokens == 0 {
+		tokens = TokenCostFor(ModelOpenAI)
+	}
+	return Result{Text: text, TokensUsed: tokens}, nil
+}
+
+func (c *openAIClient) postChatCompletions(ctx context.Context, body []byte) (string, int64, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/chat/completions", bytes.NewReader(body))
 	if err != nil {
-		return Result{}, err
+		return "", 0, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return Result{}, newProviderError("openai", err.Error())
+		return "", 0, newProviderError("openai", err.Error())
 	}
 	defer resp.Body.Close()
 
 	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return Result{}, err
+		return "", 0, err
 	}
 
 	var parsed chatResponse
 	if err := json.Unmarshal(raw, &parsed); err != nil {
-		return Result{}, err
+		return "", 0, err
 	}
 	if parsed.Error != nil && parsed.Error.Message != "" {
-		return Result{}, newProviderError("openai", parsed.Error.Message)
+		return "", 0, newProviderError("openai", parsed.Error.Message)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return Result{}, newProviderError("openai", fmt.Sprintf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(raw))))
+		return "", 0, newProviderError("openai", fmt.Sprintf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(raw))))
 	}
 	if len(parsed.Choices) == 0 || strings.TrimSpace(parsed.Choices[0].Message.Content) == "" {
-		return Result{}, newProviderError("openai", "empty response")
+		return "", 0, newProviderError("openai", "empty response")
 	}
 
 	var tokens int64
 	if parsed.Usage != nil {
 		tokens = parsed.Usage.TotalTokens
 	}
-	if tokens == 0 {
-		tokens = TokenCostFor(ModelOpenAI)
-	}
-
-	return Result{
-		Text:       strings.TrimSpace(parsed.Choices[0].Message.Content),
-		TokensUsed: tokens,
-	}, nil
+	return strings.TrimSpace(parsed.Choices[0].Message.Content), tokens, nil
 }

@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	repo "gitlab16.skiftrade.kz/templates/go/internal/repository"
@@ -26,6 +28,10 @@ func (uc *useCase) GenerateText(ctx context.Context, input ucModels.GenerateText
 		return ucModels.GenerateTextOutput{}, mapGeneratorError(err)
 	}
 
+	imageData, imageMIME, err := decodeGenerateImage(input.ImageBase64, input.ImageMIME)
+	if err != nil {
+		return ucModels.GenerateTextOutput{}, fmt.Errorf("%w: %s", ucModels.ErrInvalidInput, err.Error())
+	}
 	var profileID int64
 	if !uc.skipRegistrationCheck {
 		profile, err := uc.repo.GetProfileByTelegramID(ctx, nil, input.TelegramID)
@@ -56,9 +62,11 @@ func (uc *useCase) GenerateText(ctx context.Context, input ucModels.GenerateText
 	}
 
 	result, err := uc.modelRouter.Generate(ctx, model, generator.TextGenerateInput{
-		Prompt:   input.Prompt,
-		Category: category,
-		Messages: toGeneratorMessages(input.Messages),
+		Prompt:    input.Prompt,
+		Category:  category,
+		Messages:  toGeneratorMessages(input.Messages),
+		ImageData: imageData,
+		ImageMIME: imageMIME,
 	})
 	if err != nil {
 		return ucModels.GenerateTextOutput{}, mapGeneratorError(err)
@@ -81,11 +89,17 @@ func (uc *useCase) GenerateText(ctx context.Context, input ucModels.GenerateText
 	}
 
 	if profileID != 0 {
+		promptForHistory := input.Prompt
+		if promptForHistory == "" && len(imageData) > 0 {
+			promptForHistory = "[фото]"
+		}
 		_, _ = uc.SavePromptHistory(ctx, ucModels.SavePromptHistoryInput{
 			TelegramID: input.TelegramID,
-			Prompt:     input.Prompt,
+			Prompt:     promptForHistory,
+			Response:   result.Text,
 			Category:   category,
 			Model:      model,
+			SessionID:  strings.TrimSpace(input.SessionID),
 		})
 	}
 
@@ -123,6 +137,25 @@ func toGeneratorMessages(in []ucModels.ChatMessageInput) []generator.ChatMessage
 		out = append(out, generator.ChatMessage{Role: m.Role, Content: m.Content})
 	}
 	return out
+}
+
+func decodeGenerateImage(rawBase64, mime string) ([]byte, string, error) {
+	raw := strings.TrimSpace(rawBase64)
+	if raw == "" {
+		return nil, "", nil
+	}
+	if idx := strings.Index(raw, ","); idx >= 0 && strings.HasPrefix(strings.ToLower(raw[:idx]), "data:") {
+		raw = raw[idx+1:]
+	}
+	data, err := base64.StdEncoding.DecodeString(raw)
+	if err != nil {
+		return nil, "", fmt.Errorf("invalid image base64")
+	}
+	mime = strings.TrimSpace(mime)
+	if mime == "" {
+		mime = "image/jpeg"
+	}
+	return data, mime, nil
 }
 
 func mapGeneratorError(err error) error {

@@ -151,6 +151,14 @@ ORDER BY r.id DESC`
 
 // CreatePromptHistory saves a prompt history record for a profile.
 func (r *Repository) CreatePromptHistory(ctx context.Context, tx pgx.Tx, item repoModels.PromptHistory) (int64, error) {
+	const qWithSession = `
+INSERT INTO prompt_history(profile_id, prompt, response, session_id, category, model)
+VALUES($1, $2, $3, $4, $5, $6)
+RETURNING id`
+	const qFull = `
+INSERT INTO prompt_history(profile_id, prompt, response, category, model)
+VALUES($1, $2, $3, $4, $5)
+RETURNING id`
 	const qWithModel = `
 INSERT INTO prompt_history(profile_id, prompt, category, model)
 VALUES($1, $2, $3, $4)
@@ -162,7 +170,13 @@ RETURNING id`
 
 	qry := r.getQueryable(tx)
 	var id int64
-	err := qry.QueryRow(ctx, qWithModel, item.ProfileID, item.Prompt, item.Category, item.Model).Scan(&id)
+	err := qry.QueryRow(ctx, qWithSession, item.ProfileID, item.Prompt, item.Response, item.SessionID, item.Category, item.Model).Scan(&id)
+	if err != nil && isUndefinedColumn(err, "session_id") {
+		err = qry.QueryRow(ctx, qFull, item.ProfileID, item.Prompt, item.Response, item.Category, item.Model).Scan(&id)
+	}
+	if err != nil && isUndefinedColumn(err, "response") {
+		err = qry.QueryRow(ctx, qWithModel, item.ProfileID, item.Prompt, item.Category, item.Model).Scan(&id)
+	}
 	if err != nil && isUndefinedColumn(err, "model") {
 		err = qry.QueryRow(ctx, qLegacy, item.ProfileID, item.Prompt, item.Category).Scan(&id)
 	}
@@ -175,6 +189,20 @@ RETURNING id`
 
 // ListPromptHistoryByTelegramID returns recent saved prompts for a profile.
 func (r *Repository) ListPromptHistoryByTelegramID(ctx context.Context, tx pgx.Tx, telegramID string, limit int32) ([]repoModels.PromptHistory, error) {
+	const qWithSession = `
+SELECT ph.id, ph.profile_id, p.telegram_id, ph.prompt, COALESCE(ph.response, ''), COALESCE(ph.session_id, ''), COALESCE(ph.category, ''), COALESCE(ph.model, ''), ph.created_at
+FROM profiles p
+JOIN prompt_history ph ON ph.profile_id = p.id
+WHERE p.telegram_id = $1
+ORDER BY ph.created_at DESC, ph.id DESC
+LIMIT $2`
+	const qFull = `
+SELECT ph.id, ph.profile_id, p.telegram_id, ph.prompt, COALESCE(ph.response, ''), COALESCE(ph.category, ''), COALESCE(ph.model, ''), ph.created_at
+FROM profiles p
+JOIN prompt_history ph ON ph.profile_id = p.id
+WHERE p.telegram_id = $1
+ORDER BY ph.created_at DESC, ph.id DESC
+LIMIT $2`
 	const qWithModel = `
 SELECT ph.id, ph.profile_id, p.telegram_id, ph.prompt, COALESCE(ph.category, ''), COALESCE(ph.model, ''), ph.created_at
 FROM profiles p
@@ -191,11 +219,19 @@ ORDER BY ph.created_at DESC, ph.id DESC
 LIMIT $2`
 
 	qry := r.getQueryable(tx)
-	rows, err := qry.Query(ctx, qWithModel, telegramID, limit)
-	useLegacy := false
+	rows, err := qry.Query(ctx, qWithSession, telegramID, limit)
+	scanMode := "session"
+	if err != nil && isUndefinedColumn(err, "session_id") {
+		rows, err = qry.Query(ctx, qFull, telegramID, limit)
+		scanMode = "full"
+	}
+	if err != nil && isUndefinedColumn(err, "response") {
+		rows, err = qry.Query(ctx, qWithModel, telegramID, limit)
+		scanMode = "model"
+	}
 	if err != nil && isUndefinedColumn(err, "model") {
 		rows, err = qry.Query(ctx, qLegacy, telegramID, limit)
-		useLegacy = true
+		scanMode = "legacy"
 	}
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to list prompt history", slog.Any("error", err), slog.String("telegram_id", telegramID))
@@ -207,10 +243,15 @@ LIMIT $2`
 	for rows.Next() {
 		var item repoModels.PromptHistory
 		var scanErr error
-		if useLegacy {
+		switch scanMode {
+		case "legacy":
 			scanErr = rows.Scan(&item.ID, &item.ProfileID, &item.TelegramID, &item.Prompt, &item.Category, &item.CreatedAt)
-		} else {
+		case "model":
 			scanErr = rows.Scan(&item.ID, &item.ProfileID, &item.TelegramID, &item.Prompt, &item.Category, &item.Model, &item.CreatedAt)
+		case "full":
+			scanErr = rows.Scan(&item.ID, &item.ProfileID, &item.TelegramID, &item.Prompt, &item.Response, &item.Category, &item.Model, &item.CreatedAt)
+		default:
+			scanErr = rows.Scan(&item.ID, &item.ProfileID, &item.TelegramID, &item.Prompt, &item.Response, &item.SessionID, &item.Category, &item.Model, &item.CreatedAt)
 		}
 		if scanErr != nil {
 			return nil, scanErr
@@ -223,6 +264,22 @@ LIMIT $2`
 	}
 
 	return items, nil
+}
+
+// DeletePromptHistoryByTelegramID removes all prompt history rows for a profile.
+func (r *Repository) DeletePromptHistoryByTelegramID(ctx context.Context, tx pgx.Tx, telegramID string) error {
+	const q = `
+DELETE FROM prompt_history ph
+USING profiles p
+WHERE ph.profile_id = p.id AND p.telegram_id = $1`
+
+	qry := r.getQueryable(tx)
+	_, err := qry.Exec(ctx, q, telegramID)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to delete prompt history", slog.Any("error", err), slog.String("telegram_id", telegramID))
+		return err
+	}
+	return nil
 }
 
 // DeductWalletBalance subtracts tokens from wallet and records a withdrawal transaction.

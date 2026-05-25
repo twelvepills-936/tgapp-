@@ -206,7 +206,7 @@ func clampTextMaxOutputTokens(n int) int {
 func LoadGeminiConfig() ConfigGemini {
 	return ConfigGemini{
 		APIKey:     getenv("GEMINI_API_KEY", ""),
-		Model:      getenv("GEMINI_MODEL", "gemini-2.0-flash"),
+		Model:      getenv("GEMINI_MODEL", "gemini-2.0-flash-lite"),
 		ImageModel: getenv("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image"),
 		BaseURL:    getenv("GEMINI_API_BASE_URL", ""),
 	}

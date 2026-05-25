@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -233,6 +234,8 @@ func (uc *useCase) SavePromptHistory(ctx context.Context, input ucModels.SavePro
 		ProfileID:  profile.ID,
 		TelegramID: input.TelegramID,
 		Prompt:     input.Prompt,
+		Response:   input.Response,
+		SessionID:  strings.TrimSpace(input.SessionID),
 		Category:   category,
 		Model:      input.Model,
 	}
@@ -273,6 +276,21 @@ func (uc *useCase) GetPromptHistoryByTelegramID(ctx context.Context, telegramID 
 	return ucModels.GetPromptHistoryOutput{Items: result}, nil
 }
 
+func (uc *useCase) ClearPromptHistoryByTelegramID(ctx context.Context, telegramID string) error {
+	if err := validateTelegramID(telegramID); err != nil {
+		return err
+	}
+
+	if _, err := uc.repo.GetProfileByTelegramID(ctx, nil, telegramID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ucModels.ErrProfileNotFound
+		}
+		return err
+	}
+
+	return uc.repo.DeletePromptHistoryByTelegramID(ctx, nil, telegramID)
+}
+
 func validateTelegramID(telegramID string) error {
 	if telegramID == "" {
 		return fmt.Errorf("telegram_id is required")
@@ -289,8 +307,10 @@ func mapPromptHistoryItem(item repoModels.PromptHistory) ucModels.PromptHistoryI
 	return ucModels.PromptHistoryItem{
 		ID:        item.ID,
 		Prompt:    item.Prompt,
+		Response:  item.Response,
 		Category:  item.Category,
 		Model:     item.Model,
+		SessionID: item.SessionID,
 		CreatedAt: item.CreatedAt.Format("2006-01-02 15:04"),
 	}
 }

@@ -87,7 +87,7 @@ Chat history in `messages[]` is trimmed server-side (assistant turns to ~6k char
 | Variable | Default | Description |
 |---|---|---|
 | `GEMINI_API_KEY` | _(empty)_ | API key from [Google AI Studio](https://aistudio.google.com/apikey) |
-| `GEMINI_MODEL` | `gemini-2.0-flash` | Model id for text (`gemini-2.0-flash`, etc.) |
+| `GEMINI_MODEL` | `gemini-2.0-flash-lite` | Model id for text (e.g. `gemini-2.0-flash-lite`, `gemini-2.0-flash-lite-001`). Do **not** use `*-latest` aliases — API returns 404 |
 | `GEMINI_IMAGE_MODEL` | `gemini-2.5-flash-image` | Model id for **Nano Banana** image generation |
 | `GEMINI_API_BASE_URL` | _(empty)_ | Override API base (optional) |
 

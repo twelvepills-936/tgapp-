@@ -38,6 +38,10 @@ type generateTextRequest struct {
 	Category        string               `json:"category"`
 	Model           string               `json:"model"`
 	Messages        []chatMessageRequest `json:"messages"`
+	ImageBase64     string               `json:"imageBase64"`
+	ImageMIME       string               `json:"imageMimeType"`
+	SessionID       string               `json:"sessionId"`
+	SessionIDSnake  string               `json:"session_id"`
 }
 
 type generateTextData struct {
@@ -91,12 +95,20 @@ func (h *GenerateTextHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		})
 	}
 
+	sessionID := strings.TrimSpace(req.SessionID)
+	if sessionID == "" {
+		sessionID = strings.TrimSpace(req.SessionIDSnake)
+	}
+
 	out, err := h.uc.GenerateText(r.Context(), ucModels.GenerateTextInput{
-		TelegramID: telegramID,
-		Prompt:     strings.TrimSpace(req.Prompt),
-		Category:   strings.TrimSpace(req.Category),
-		Model:      strings.TrimSpace(req.Model),
-		Messages:   messages,
+		TelegramID:  telegramID,
+		Prompt:      strings.TrimSpace(req.Prompt),
+		Category:    strings.TrimSpace(req.Category),
+		Model:       strings.TrimSpace(req.Model),
+		Messages:    messages,
+		ImageBase64: strings.TrimSpace(req.ImageBase64),
+		ImageMIME:   strings.TrimSpace(req.ImageMIME),
+		SessionID:   sessionID,
 	})
 	if err != nil {
 		slog.ErrorContext(r.Context(), "generate text failed", slog.String("error", err.Error()))
