@@ -5,7 +5,5 @@ buildCommand = "go build -o bin/server ./cmd/service"
 
 [deploy]
 startCommand = "./bin/server"
-# Healthcheck probes PORT (Railway-injected). Do not set APP_HTTP_PORT in Variables.
-healthcheckPath = "/health"
-healthcheckTimeout = 300
+# Healthcheck отключён — деплой не ждёт GET /health. Проверка вручную: /health
 restartPolicyType = "ON_FAILURE"

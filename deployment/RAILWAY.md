@@ -73,7 +73,7 @@ Railway проверяет **`PORT`** (часто 8080), а не `APP_HTTP_PORT`
 
 Start Command: **`./bin/server`** (не `go run ./cmd/migrate`).
 
-Чтобы временно пройти деплой без healthcheck — уберите `healthcheckPath` из `railway.toml` (Settings → redeploy).
+Healthcheck при деплое **отключён** в `railway.toml` (нет `healthcheckPath`). После деплоя проверьте `GET /health` вручную. Чтобы снова включить — добавьте `healthcheckPath = "/health"` и `healthcheckTimeout = 300`.
 
 Если в Mini App **Load failed**, а URL API верный — откройте в браузере:
 
