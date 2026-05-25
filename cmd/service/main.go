@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
 
 	"gitlab16.skiftrade.kz/templates/go/internal/bot"
 	"gitlab16.skiftrade.kz/templates/go/internal/httphandler"
@@ -60,29 +59,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	staged := httphandler.NewStagedRoot()
-	application.SetHTTPRootHandler(staged)
-
-	if err := application.Init(ctx); err != nil {
-		slog.ErrorContext(ctx, "failed to init app", logger.ErrorAttr(err))
-		os.Exit(1)
-	}
-
-	listenErr := make(chan error, 1)
-	go func() {
-		if err := application.Run(ctx); err != nil {
-			listenErr <- err
-		}
-	}()
-
-	listenCtx, listenCancel := context.WithTimeout(ctx, 15*time.Second)
-	if err := application.WaitHTTPListening(listenCtx); err != nil {
-		slog.ErrorContext(ctx, "HTTP server did not bind in time", logger.ErrorAttr(err))
-		os.Exit(1)
-	}
-	listenCancel()
-	slog.InfoContext(ctx, "HTTP port open, continuing startup")
-
 	pool, err := repository.NewPostgres(ctx, repoModels.ConfigPostgres(addConfig.Postgres))
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to init postgres", logger.ErrorAttr(err))
@@ -97,7 +73,7 @@ func main() {
 		)
 		os.Exit(1)
 	}
-	slog.InfoContext(ctx, "database migrations applied (HTTP server keeps running)",
+	slog.InfoContext(ctx, "database migrations applied",
 		slog.String("dir", migrationsDir),
 	)
 
@@ -111,6 +87,7 @@ func main() {
 	})
 	svc := service.NewService(uc)
 
+	// gRPC services must be registered before Init starts GrpcServer.Serve.
 	api.RegisterCyberMateServer(application.GrpcServer, svc)
 
 	if err := api.RegisterCyberMateHandler(ctx, application.ServeMux, application.GrpcConn); err != nil {
@@ -125,19 +102,21 @@ func main() {
 	tgWebhook := httphandler.NewTelegramWebhookSlot()
 	rootMux.Handle("/v1/telegram/webhook", tgWebhook)
 	rootMux.Handle("/", application.ServeMux)
-	staged.SetReady(httphandler.NormalizePath(rootMux))
+	application.SetHTTPRootHandler(httphandler.NormalizePath(rootMux))
 
 	slog.InfoContext(ctx, "API routes ready")
+
+	if err := application.Init(ctx); err != nil {
+		slog.ErrorContext(ctx, "failed to init app", logger.ErrorAttr(err))
+		os.Exit(1)
+	}
 
 	tgCfg := bot.LoadConfig()
 	go initTelegramBot(ctx, tgCfg, tgWebhook)
 
-	select {
-	case err := <-listenErr:
-		if err != nil {
-			slog.ErrorContext(ctx, "HTTP server stopped", logger.ErrorAttr(err))
-			os.Exit(1)
-		}
+	if err := application.Run(ctx); err != nil {
+		slog.ErrorContext(ctx, "HTTP server stopped", logger.ErrorAttr(err))
+		os.Exit(1)
 	}
 }
 
