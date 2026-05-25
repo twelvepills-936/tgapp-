@@ -65,8 +65,16 @@ func (uc *useCase) GenerateImage(ctx context.Context, input ucModels.GenerateIma
 		Category: category,
 		Messages: toGeneratorMessages(input.Messages),
 	}
-	draftPrompt := generator.BuildImagePrompt(imageIn)
-	finalPrompt := uc.enrichImagePrompt(ctx, draftPrompt)
+	var draftPrompt string
+	if model == generator.ModelNanoBanana {
+		draftPrompt = generator.BuildImagePromptCompact(imageIn)
+	} else {
+		draftPrompt = generator.BuildImagePrompt(imageIn)
+	}
+	finalPrompt := draftPrompt
+	if model != generator.ModelNanoBanana || generator.EnvBool("NANO_BANANA_ENRICH_PROMPT") {
+		finalPrompt = uc.enrichImagePrompt(ctx, draftPrompt)
+	}
 
 	result, err := uc.imageGenerator.GenerateImage(ctx, model, generator.ImageGenerateInput{
 		Prompt:   finalPrompt,

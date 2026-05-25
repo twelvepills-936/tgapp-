@@ -10,7 +10,38 @@ import (
 	"gitlab16.skiftrade.kz/templates/go/pkg/config"
 )
 
-func TestGeminiClient_Generate_OK(t *testing.T) {
+func TestGeminiClient_Generate_WaveSpeed_OK(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer secret" {
+			t.Fatalf("expected Bearer token, got %q", r.Header.Get("Authorization"))
+		}
+		if !strings.HasSuffix(r.URL.Path, "/chat/completions") {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"Готово!"}}],"usage":{"total_tokens":42}}`))
+	}))
+	defer srv.Close()
+
+	gen := newGeminiClient(config.ConfigGemini{
+		APIKey:  "secret",
+		Model:   "google/gemini-2.0-flash-001",
+		BaseURL: srv.URL,
+	})
+	if !gen.waveSpeed {
+		t.Fatal("expected WaveSpeed mode")
+	}
+
+	res, err := gen.Generate(context.Background(), TextGenerateInput{Prompt: "Напиши пост", Category: "text"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Text != "Готово!" || res.TokensUsed != 42 {
+		t.Fatalf("unexpected result: %+v", res)
+	}
+}
+
+func TestGeminiClient_Generate_GoogleHTTP_OK(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("x-goog-api-key") != "secret" {
 			t.Fatalf("missing api key header")
@@ -25,6 +56,9 @@ func TestGeminiClient_Generate_OK(t *testing.T) {
 		Model:   "gemini-2.0-flash-lite",
 		BaseURL: srv.URL,
 	})
+	if gen.waveSpeed {
+		t.Fatal("expected Google HTTP mode")
+	}
 
 	res, err := gen.Generate(context.Background(), TextGenerateInput{Prompt: "Напиши пост", Category: "text"})
 	if err != nil {

@@ -30,7 +30,7 @@ func (r *ImageRouter) GenerateImage(ctx context.Context, model string, in ImageG
 	switch slug {
 	case ModelNanoBanana:
 		if r.nanoBanana == nil {
-			return ImageResult{}, newProviderError("nano-banana", "GEMINI_API_KEY is not configured")
+			return ImageResult{}, newProviderError("nano-banana", "WAVESPEED_API_KEY or GEMINI_API_KEY is not configured")
 		}
 		return r.nanoBanana.GenerateImage(ctx, slug, in)
 	case ModelAliceAIArt:

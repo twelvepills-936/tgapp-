@@ -64,10 +64,12 @@ type ConfigAI struct {
 }
 
 type ConfigGemini struct {
-	APIKey     string
-	Model      string
-	ImageModel string
-	BaseURL    string
+	APIKey              string
+	Model               string
+	ImageModel          string
+	BaseURL             string
+	WaveSpeedImageBase  string
+	UseGoogle           bool
 }
 
 type ConfigYandex struct {
@@ -204,11 +206,51 @@ func clampTextMaxOutputTokens(n int) int {
 }
 
 func LoadGeminiConfig() ConfigGemini {
+	apiKey := getenv("GEMINI_API_KEY", "")
+	if apiKey == "" {
+		apiKey = getenv("WAVESPEED_API_KEY", "")
+	}
+
+	baseURL := strings.TrimRight(getenv("GEMINI_API_BASE_URL", ""), "/")
+	useGoogle := getenvBool("GEMINI_USE_GOOGLE", false)
+
+	if !useGoogle && baseURL == "" && apiKey != "" {
+		baseURL = "https://llm.wavespeed.ai/v1"
+	}
+
+	model := getenv("GEMINI_MODEL", "")
+	if model == "" {
+		if strings.Contains(strings.ToLower(baseURL), "wavespeed.ai") {
+			model = "google/gemini-2.0-flash-001"
+		} else {
+			model = "gemini-2.0-flash-lite"
+		}
+	}
+
+	imageModel := strings.TrimSpace(getenv("NANO_BANANA_MODEL", ""))
+	if imageModel == "" {
+		imageModel = getenv("GEMINI_IMAGE_MODEL", "")
+	}
+	if imageModel == "" {
+		if strings.Contains(strings.ToLower(baseURL), "wavespeed.ai") {
+			imageModel = "google/nano-banana-pro"
+		} else {
+			imageModel = "gemini-2.5-flash-image"
+		}
+	}
+
+	waveSpeedImageBase := strings.TrimRight(getenv("WAVESPEED_IMAGE_API_BASE_URL", ""), "/")
+	if waveSpeedImageBase == "" {
+		waveSpeedImageBase = "https://api.wavespeed.ai/api/v3"
+	}
+
 	return ConfigGemini{
-		APIKey:     getenv("GEMINI_API_KEY", ""),
-		Model:      getenv("GEMINI_MODEL", "gemini-2.0-flash-lite"),
-		ImageModel: getenv("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image"),
-		BaseURL:    getenv("GEMINI_API_BASE_URL", ""),
+		APIKey:             apiKey,
+		Model:              model,
+		ImageModel:         imageModel,
+		BaseURL:            baseURL,
+		WaveSpeedImageBase: waveSpeedImageBase,
+		UseGoogle:          useGoogle,
 	}
 }
 

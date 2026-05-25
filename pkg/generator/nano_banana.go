@@ -14,10 +14,13 @@ import (
 	"gitlab16.skiftrade.kz/templates/go/pkg/config"
 )
 
-// NewNanoBananaClient creates a Gemini image generator (Nano Banana).
+// NewNanoBananaClient creates an image generator (Google Gemini or WaveSpeed Nano Banana Pro).
 func NewNanoBananaClient(cfg config.ConfigGemini) ImageGenerator {
 	if cfg.APIKey == "" {
 		return nil
+	}
+	if isNanoBananaWaveSpeed(cfg) {
+		return newNanoBananaWaveSpeedClient(cfg)
 	}
 	baseURL := strings.TrimRight(cfg.BaseURL, "/")
 	if baseURL == "" {
@@ -27,7 +30,7 @@ func NewNanoBananaClient(cfg config.ConfigGemini) ImageGenerator {
 	if model == "" {
 		model = "gemini-2.5-flash-image"
 	}
-	return &nanoBananaClient{
+	return &nanoBananaGoogleClient{
 		apiKey:  cfg.APIKey,
 		baseURL: baseURL,
 		model:   model,
@@ -35,7 +38,17 @@ func NewNanoBananaClient(cfg config.ConfigGemini) ImageGenerator {
 	}
 }
 
-type nanoBananaClient struct {
+func isNanoBananaWaveSpeed(cfg config.ConfigGemini) bool {
+	if cfg.UseGoogle {
+		return false
+	}
+	if isWaveSpeedBaseURL(cfg.BaseURL) {
+		return true
+	}
+	return strings.HasPrefix(strings.TrimSpace(cfg.ImageModel), "google/")
+}
+
+type nanoBananaGoogleClient struct {
 	apiKey  string
 	baseURL string
 	model   string
@@ -53,8 +66,8 @@ type nanoBananaContent struct {
 }
 
 type nanoBananaPart struct {
-	Text       string              `json:"text,omitempty"`
-	InlineData *nanoBananaInline   `json:"inlineData,omitempty"`
+	Text       string            `json:"text,omitempty"`
+	InlineData *nanoBananaInline `json:"inlineData,omitempty"`
 }
 
 type nanoBananaInline struct {
@@ -77,11 +90,7 @@ type nanoBananaResponse struct {
 	} `json:"usageMetadata"`
 }
 
-func (c *nanoBananaClient) GenerateImage(ctx context.Context, _ string, in ImageGenerateInput) (ImageResult, error) {
-	if c.apiKey == "" {
-		return ImageResult{}, ErrImageGeneratorUnavailable
-	}
-
+func (c *nanoBananaGoogleClient) GenerateImage(ctx context.Context, _ string, in ImageGenerateInput) (ImageResult, error) {
 	text := strings.TrimSpace(BuildImagePrompt(in))
 	if text == "" {
 		return ImageResult{}, newProviderError("gemini-image", "empty prompt")

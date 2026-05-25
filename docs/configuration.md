@@ -59,7 +59,7 @@ If `SERVER_WRITE_TIMEOUT` is too low (e.g. `30s`), long text generation (DeepSee
 |---|---|---|
 | `yandexgpt` (default) | YandexGPT (Foundation Models `/completion`) | `YANDEX_GPT_*` |
 | `deepseek` | DeepSeek via Yandex AI Studio (`/v1/responses`) | `YANDEX_GPT_*` + `YANDEX_DEEPSEEK_MODEL` |
-| `gemini-flash` | Google Gemini | `GEMINI_*` |
+| `gemini-flash` | Gemini via [WaveSpeed](https://llm.wavespeed.ai) (OpenAI-compatible) | `GEMINI_*` / `WAVESPEED_API_KEY` |
 | `openai` | OpenAI | `OPENAI_*` |
 
 Token cost per request (in-app wallet): `yandexgpt` = 1, `deepseek` = 2, `gemini-flash` = 1, `openai` = 2.
@@ -82,21 +82,31 @@ DeepSeek uses the same `YANDEX_GPT_API_KEY` and `YANDEX_GPT_FOLDER_ID` as Yandex
 
 Chat history in `messages[]` is trimmed server-side (assistant turns to ~6k chars) so follow-up prompts like «построй схему HTTPS» do not fail with `message N too long` after a long previous answer.
 
-## Gemini
+## Gemini (text via WaveSpeed)
 
 | Variable | Default | Description |
 |---|---|---|
-| `GEMINI_API_KEY` | _(empty)_ | API key from [Google AI Studio](https://aistudio.google.com/apikey) |
-| `GEMINI_MODEL` | `gemini-2.0-flash-lite` | Model id for text (e.g. `gemini-2.0-flash-lite`, `gemini-2.0-flash-lite-001`). Do **not** use `*-latest` aliases — API returns 404 |
-| `GEMINI_IMAGE_MODEL` | `gemini-2.5-flash-image` | Model id for **Nano Banana** image generation |
-| `GEMINI_API_BASE_URL` | _(empty)_ | Override API base (optional) |
+| `GEMINI_API_KEY` or `WAVESPEED_API_KEY` | _(empty)_ | API token from [WaveSpeed](https://llm.wavespeed.ai) |
+| `GEMINI_MODEL` | `google/gemini-2.0-flash-001` (when WaveSpeed base is used) | Model id for text, e.g. `google/gemini-2.0-flash-001` |
+| `GEMINI_API_BASE_URL` | `https://llm.wavespeed.ai/v1` (when key is set and `GEMINI_USE_GOOGLE` is not `true`) | OpenAI-compatible API base; endpoint `POST /chat/completions` |
+| `GEMINI_USE_GOOGLE` | `false` | Set `true` to use [Google AI Studio](https://aistudio.google.com/apikey) instead of WaveSpeed |
+| `NANO_BANANA_MODEL` | `google/nano-banana-pro` (WaveSpeed) | Nano Banana image model id |
+| `WAVESPEED_IMAGE_API_BASE_URL` | `https://api.wavespeed.ai/api/v3` | WaveSpeed image API base (same `WAVESPEED_API_KEY`) |
+| `NANO_BANANA_RESOLUTION` | `1k` | Output resolution: `1k`, `2k`, `4k` |
+| `NANO_BANANA_OUTPUT_FORMAT` | `jpeg` | `jpeg` is faster to transfer than `png` |
+| `NANO_BANANA_SYNC_MODE` | `false` | Async submit + polling (usually faster than sync wait) |
+| `NANO_BANANA_BASE64_OUTPUT` | `false` | URL in response + download (faster than inline base64) |
+| `NANO_BANANA_POLL_MS` | `800` | Poll interval in ms when async |
+| `NANO_BANANA_ENRICH_PROMPT` | `false` | Set `true` to run YandexGPT art-director before Nano Banana (adds ~5–15s) |
+| `SKIP_IMAGE_PROMPT_ENRICH` | _(unset)_ | `true` disables enrich for all image models |
+| `GEMINI_IMAGE_MODEL` | _(fallback)_ | Used if `NANO_BANANA_MODEL` is empty (Google API only) |
 
 Text generation uses `POST /v1/generate/text` with `model=gemini-flash`.  
 Image generation uses `POST /v1/generate/image`:
 
 | `model` slug | Provider | Env |
 |---|---|---|
-| `nano-banana` | Gemini image | `GEMINI_API_KEY`, `GEMINI_IMAGE_MODEL` |
+| `nano-banana` | Nano Banana Pro (WaveSpeed) | `WAVESPEED_API_KEY`, `NANO_BANANA_MODEL` |
 | `alice-ai-art` | Alice AI ART (Yandex AI Studio) | `YANDEX_GPT_API_KEY`, `YANDEX_GPT_FOLDER_ID`, `YANDEX_ALICE_AI_ART_MODEL` |
 
 | `YANDEX_ALICE_AI_ART_MODEL` | `aliceai-image-art-3.0/latest` | Alice AI ART model id in catalog |

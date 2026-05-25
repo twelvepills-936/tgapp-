@@ -16,6 +16,8 @@ const imageQualityTail = ". Профессиональная иллюстрац�
 	"выразительный свет и тени, богатые детали и текстуры, цельная палитра, глубина кадра, " +
 	"без текста, UI, логотипов, водяных знаков, артефактов и искажённых лиц."
 
+const imageQualityTailCompact = ". Без текста, UI, логотипов и водяных знаков."
+
 var imageAssistantPlaceholders = []string{
 	"изображение создано",
 	"image created",
@@ -23,8 +25,17 @@ var imageAssistantPlaceholders = []string{
 	"изображение сгенерировано",
 }
 
+// BuildImagePromptCompact is a shorter prompt variant (faster inference on WaveSpeed Nano Banana).
+func BuildImagePromptCompact(in ImageGenerateInput) string {
+	return buildImagePrompt(in, imageQualityTailCompact, false)
+}
+
 // BuildImagePrompt merges multi-turn chat into one cohesive scene description for image APIs.
 func BuildImagePrompt(in ImageGenerateInput) string {
+	return buildImagePrompt(in, imageQualityTail, true)
+}
+
+func buildImagePrompt(in ImageGenerateInput, qualityTail string, verbosePrefix bool) string {
 	prepared := PrepareTextInput(TextGenerateInput{
 		Prompt:   in.Prompt,
 		Category: in.Category,
@@ -45,7 +56,7 @@ func BuildImagePrompt(in ImageGenerateInput) string {
 	}
 
 	if len(priorUsers) == 0 {
-		return enhanceStandaloneImagePrompt(current)
+		return enhanceImagePrompt(current, qualityTail, verbosePrefix)
 	}
 
 	// Avoid duplicating the current prompt if the client already sent it as the last user turn.
@@ -54,19 +65,19 @@ func BuildImagePrompt(in ImageGenerateInput) string {
 	}
 
 	if len(priorUsers) == 0 {
-		return enhanceStandaloneImagePrompt(current)
+		return enhanceImagePrompt(current, qualityTail, verbosePrefix)
 	}
 
 	scene := strings.Join(priorUsers, ". ")
 	if current == "" {
-		return enhanceStandaloneImagePrompt(scene)
+		return enhanceImagePrompt(scene, qualityTail, verbosePrefix)
 	}
 
 	if isImageFollowUpPrompt(current) {
-		return enhanceStandaloneImagePrompt(scene + ". " + formatImageFollowUp(current))
+		return enhanceImagePrompt(scene+". "+formatImageFollowUp(current), qualityTail, verbosePrefix)
 	}
 
-	return enhanceStandaloneImagePrompt(scene + ". " + current)
+	return enhanceImagePrompt(scene+". "+current, qualityTail, verbosePrefix)
 }
 
 func isImageAssistantPlaceholder(s string) bool {
@@ -112,16 +123,23 @@ func formatImageFollowUp(current string) string {
 }
 
 func enhanceStandaloneImagePrompt(p string) string {
+	return enhanceImagePrompt(p, imageQualityTail, true)
+}
+
+func enhanceImagePrompt(p, qualityTail string, verbosePrefix bool) string {
 	p = strings.TrimSpace(p)
 	if p == "" {
 		return p
 	}
 	lower := strings.ToLower(p)
-	if strings.HasPrefix(lower, "детализирован") || strings.HasPrefix(lower, "качествен") {
-		if !strings.Contains(lower, "водяных") {
-			return p + imageQualityTail
-		}
+	if strings.Contains(lower, "водяных") {
 		return p
 	}
-	return "Создай изображение по ТЗ. " + p + imageQualityTail
+	if !verbosePrefix {
+		return p + qualityTail
+	}
+	if strings.HasPrefix(lower, "детализирован") || strings.HasPrefix(lower, "качествен") {
+		return p + qualityTail
+	}
+	return "Создай изображение по ТЗ. " + p + qualityTail
 }

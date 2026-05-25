@@ -50,6 +50,16 @@ func newGeminiClient(cfg config.ConfigGemini) *geminiClient {
 		client:  &http.Client{Timeout: 90 * time.Second},
 	}
 
+	if isWaveSpeedMode(baseURL, model) {
+		if baseURL == "" {
+			baseURL = defaultWaveSpeedBase
+		}
+		c.baseURL = baseURL
+		c.model = normalizeWaveSpeedModel(model)
+		c.waveSpeed = true
+		return c
+	}
+
 	// Custom BaseURL => HTTP transport (tests, proxies). Otherwise official SDK + API key.
 	if baseURL != "" && baseURL != defaultGeminiAPIBase {
 		c.useHTTP = true
@@ -71,12 +81,13 @@ func newGeminiClient(cfg config.ConfigGemini) *geminiClient {
 }
 
 type geminiClient struct {
-	apiKey  string
-	baseURL string
-	model   string
-	useHTTP bool
-	client  *http.Client
-	genai   *genai.Client
+	apiKey    string
+	baseURL   string
+	model     string
+	useHTTP   bool
+	waveSpeed bool
+	client    *http.Client
+	genai     *genai.Client
 }
 
 type geminiGenerateRequest struct {
@@ -116,15 +127,18 @@ func (c *geminiClient) Generate(ctx context.Context, in TextGenerateInput) (Resu
 	multiTurn := len(turns) > 1
 	messages := PrependSystem(turns, englishSystemPrompt(in.Category, multiTurn))
 
-	models := geminiModelsToTry(c.model)
+	models := geminiModelsToTry(c.model, c.waveSpeed)
 	var primaryErr error
 	var lastErr error
 	for i, model := range models {
 		var res Result
 		var err error
-		if c.useHTTP {
+		switch {
+		case c.waveSpeed:
+			res, err = c.generateWithChatCompletions(ctx, model, messages, in.ImageData, in.ImageMIME)
+		case c.useHTTP:
 			res, err = c.generateWithHTTP(ctx, model, messages, in.ImageData, in.ImageMIME)
-		} else {
+		default:
 			res, err = c.generateWithSDK(ctx, model, messages, in.ImageData, in.ImageMIME)
 		}
 		if err == nil {
@@ -148,7 +162,10 @@ func (c *geminiClient) Generate(ctx context.Context, in TextGenerateInput) (Resu
 	return Result{}, newProviderError("gemini", "generation failed")
 }
 
-func geminiModelsToTry(primary string) []string {
+func geminiModelsToTry(primary string, waveSpeed bool) []string {
+	if waveSpeed {
+		return []string{normalizeWaveSpeedModel(primary)}
+	}
 	seen := make(map[string]struct{})
 	out := make([]string, 0, len(geminiModelFallback)+1)
 	add := func(m string) {

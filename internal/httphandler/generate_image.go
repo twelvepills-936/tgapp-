@@ -108,7 +108,7 @@ func writeGenerateImageError(w http.ResponseWriter, err error) {
 	case errors.Is(err, generator.ErrImageGeneratorUnavailable):
 		writeJSON(w, http.StatusServiceUnavailable, errorResponse{
 			Code:    errorcodes.AIProviderError,
-			Message: "image generation is not configured (set GEMINI_API_KEY for nano-banana or YANDEX_GPT_* for alice-ai-art)",
+			Message: "image generation is not configured (set WAVESPEED_API_KEY or GEMINI_API_KEY for nano-banana, or YANDEX_GPT_* for alice-ai-art)",
 		})
 	case errors.Is(err, ucModels.ErrProfileNotFound):
 		writeJSON(w, http.StatusNotFound, errorResponse{
