@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	repo "gitlab16.skiftrade.kz/templates/go/internal/repository"
@@ -59,10 +60,17 @@ func (uc *useCase) GenerateImage(ctx context.Context, input ucModels.GenerateIma
 		category = "image"
 	}
 
-	result, err := uc.imageGenerator.GenerateImage(ctx, model, generator.ImageGenerateInput{
+	imageIn := generator.ImageGenerateInput{
 		Prompt:   input.Prompt,
 		Category: category,
 		Messages: toGeneratorMessages(input.Messages),
+	}
+	draftPrompt := generator.BuildImagePrompt(imageIn)
+	finalPrompt := uc.enrichImagePrompt(ctx, draftPrompt)
+
+	result, err := uc.imageGenerator.GenerateImage(ctx, model, generator.ImageGenerateInput{
+		Prompt:   finalPrompt,
+		Category: category,
 	})
 	if err != nil {
 		return ucModels.GenerateImageOutput{}, mapGeneratorError(err)
@@ -93,8 +101,10 @@ func (uc *useCase) GenerateImage(ctx context.Context, input ucModels.GenerateIma
 		_, _ = uc.SavePromptHistory(ctx, ucModels.SavePromptHistoryInput{
 			TelegramID: input.TelegramID,
 			Prompt:     input.Prompt,
+			Response:   "[изображение]",
 			Category:   category,
 			Model:      model,
+			SessionID:  strings.TrimSpace(input.SessionID),
 		})
 	}
 

@@ -78,13 +78,23 @@ func (c *aliceAIArtClient) GenerateImage(ctx context.Context, _ string, in Image
 	if text == "" {
 		return ImageResult{}, newProviderError("alice-ai-art", "empty prompt")
 	}
-	if in.Category != "" && !strings.HasPrefix(text, "Category:") {
-		text = fmt.Sprintf("Category: %s. %s", in.Category, text)
-	}
 
+	res, err := c.postGenerate(ctx, text)
+	if err != nil && IsContentPolicy(err) && len(in.Messages) > 0 {
+		fallback := strings.TrimSpace(enhanceStandaloneImagePrompt(in.Prompt))
+		if fallback != "" && fallback != text {
+			if res2, err2 := c.postGenerate(ctx, fallback); err2 == nil {
+				return res2, nil
+			}
+		}
+	}
+	return res, err
+}
+
+func (c *aliceAIArtClient) postGenerate(ctx context.Context, prompt string) (ImageResult, error) {
 	body, err := json.Marshal(yandexImageGenerateRequest{
 		Model:          c.modelURI,
-		Prompt:         text,
+		Prompt:         prompt,
 		Size:           c.size,
 		ResponseFormat: "b64_json",
 	})

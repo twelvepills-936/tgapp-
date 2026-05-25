@@ -31,6 +31,8 @@ type generateImageRequest struct {
 	Category        string               `json:"category"`
 	Model           string               `json:"model"`
 	Messages        []chatMessageRequest `json:"messages"`
+	SessionID       string               `json:"sessionId"`
+	SessionIDSnake  string               `json:"session_id"`
 }
 
 type generateImageData struct {
@@ -75,12 +77,18 @@ func (h *GenerateImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		})
 	}
 
+	sessionID := strings.TrimSpace(req.SessionID)
+	if sessionID == "" {
+		sessionID = strings.TrimSpace(req.SessionIDSnake)
+	}
+
 	out, err := h.uc.GenerateImage(r.Context(), ucModels.GenerateImageInput{
 		TelegramID: telegramID,
 		Prompt:     strings.TrimSpace(req.Prompt),
 		Category:   strings.TrimSpace(req.Category),
 		Model:      strings.TrimSpace(req.Model),
 		Messages:   messages,
+		SessionID:  sessionID,
 	})
 	if err != nil {
 		slog.ErrorContext(r.Context(), "generate image failed", slog.String("error", err.Error()))

@@ -204,6 +204,7 @@ type GenerateImageInput struct {
 	Category   string
 	Model      string
 	Messages   []ChatMessageInput
+	SessionID  string
 }
 
 func (i *GenerateImageInput) Validate(requireTelegramID bool) error {
@@ -232,6 +233,9 @@ func (i *GenerateImageInput) Validate(requireTelegramID bool) error {
 	}
 	if len(i.Messages) > MaxGenerateMessagesCount {
 		return fmt.Errorf("%w: too many messages in context", ErrInvalidInput)
+	}
+	if len(i.SessionID) > MaxChatSessionIDBytes {
+		return fmt.Errorf("%w: session_id too long", ErrInvalidInput)
 	}
 	return nil
 }
