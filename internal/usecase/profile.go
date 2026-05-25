@@ -124,6 +124,7 @@ func (uc *useCase) GetUserByTelegramID(ctx context.Context, telegramID string) (
 		TelegramID: p.TelegramID,
 		Avatar:     p.Avatar,
 		Username:   p.Username,
+		Role:       p.Role,
 		Verified:   p.Verified,
 	}}, nil
 }

@@ -37,14 +37,15 @@ func (uc *useCase) GenerateText(ctx context.Context, input ucModels.GenerateText
 		}
 		profileID = profile.ID
 
-		wallet, err := uc.repo.GetWalletByTelegramID(ctx, nil, input.TelegramID)
-		if err != nil {
-			return ucModels.GenerateTextOutput{}, err
+		if !uc.skipAIWalletCheck {
+			wallet, err := uc.repo.GetWalletByTelegramID(ctx, nil, input.TelegramID)
+			if err != nil {
+				return ucModels.GenerateTextOutput{}, err
+			}
+			if wallet.BalanceAvailable < generator.TokenCostFor(model) {
+				return ucModels.GenerateTextOutput{}, ucModels.ErrInsufficientBalance
+			}
 		}
-		if wallet.BalanceAvailable < generator.TokenCostFor(model) {
-			return ucModels.GenerateTextOutput{}, ucModels.ErrInsufficientBalance
-		}
-		_ = wallet
 	} else if p, err := uc.repo.GetProfileByTelegramID(ctx, nil, input.TelegramID); err == nil {
 		profileID = p.ID
 	}
@@ -68,7 +69,7 @@ func (uc *useCase) GenerateText(ctx context.Context, input ucModels.GenerateText
 		tokensUsed = generator.TokenCostFor(model)
 	}
 
-	if profileID != 0 && !uc.skipRegistrationCheck {
+	if profileID != 0 && !uc.skipRegistrationCheck && !uc.skipAIWalletCheck {
 		cost := generator.TokenCostFor(model)
 		desc := fmt.Sprintf("AI generation (%s)", model)
 		if err := uc.repo.DeductWalletBalance(ctx, nil, profileID, cost, desc); err != nil {

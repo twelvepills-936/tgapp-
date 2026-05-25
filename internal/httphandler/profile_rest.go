@@ -48,11 +48,23 @@ func (h *ProfileRESTHandler) getUser(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"data": map[string]any{
-			"id":      out.Data.ID,
-			"name":    out.Data.Name,
-			"surname": out.Data.Username,
+			"id":               out.Data.ID,
+			"name":             out.Data.Name,
+			"surname":          out.Data.Username,
+			"username":         out.Data.Username,
+			"subscriptionPlan": normalizeSubscriptionPlan(out.Data.Role),
+			"verified":         out.Data.Verified,
 		},
 	})
+}
+
+func normalizeSubscriptionPlan(role string) string {
+	switch strings.ToLower(strings.TrimSpace(role)) {
+	case "pro", "ultra", "free":
+		return strings.ToLower(strings.TrimSpace(role))
+	default:
+		return "free"
+	}
 }
 
 func (h *ProfileRESTHandler) getWallet(w http.ResponseWriter, r *http.Request) {

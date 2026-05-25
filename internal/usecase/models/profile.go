@@ -50,6 +50,7 @@ type ProfileUser struct {
 	TelegramID string
 	Avatar     string
 	Username   string
+	Role       string
 	Verified   bool
 }
 

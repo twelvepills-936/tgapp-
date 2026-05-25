@@ -41,12 +41,14 @@ func (uc *useCase) GenerateImage(ctx context.Context, input ucModels.GenerateIma
 		}
 		profileID = profile.ID
 
-		wallet, err := uc.repo.GetWalletByTelegramID(ctx, nil, input.TelegramID)
-		if err != nil {
-			return ucModels.GenerateImageOutput{}, err
-		}
-		if wallet.BalanceAvailable < generator.ImageTokenCostFor(model) {
-			return ucModels.GenerateImageOutput{}, ucModels.ErrInsufficientBalance
+		if !uc.skipAIWalletCheck {
+			wallet, err := uc.repo.GetWalletByTelegramID(ctx, nil, input.TelegramID)
+			if err != nil {
+				return ucModels.GenerateImageOutput{}, err
+			}
+			if wallet.BalanceAvailable < generator.ImageTokenCostFor(model) {
+				return ucModels.GenerateImageOutput{}, ucModels.ErrInsufficientBalance
+			}
 		}
 	} else if p, err := uc.repo.GetProfileByTelegramID(ctx, nil, input.TelegramID); err == nil {
 		profileID = p.ID
@@ -76,7 +78,7 @@ func (uc *useCase) GenerateImage(ctx context.Context, input ucModels.GenerateIma
 		return ucModels.GenerateImageOutput{}, err
 	}
 
-	if profileID != 0 && !uc.skipRegistrationCheck {
+	if profileID != 0 && !uc.skipRegistrationCheck && !uc.skipAIWalletCheck {
 		cost := generator.ImageTokenCostFor(model)
 		desc := fmt.Sprintf("AI image generation (%s)", model)
 		if err := uc.repo.DeductWalletBalance(ctx, nil, profileID, cost, desc); err != nil {

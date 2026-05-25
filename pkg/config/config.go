@@ -234,6 +234,11 @@ func SkipRegistrationCheck() bool {
 	return getenv("ENVIRONMENT", "development") == "development"
 }
 
+// SkipAIWalletCheck disables balance checks and deductions for text/image generation.
+func SkipAIWalletCheck() bool {
+	return getenvBool("SKIP_AI_WALLET_CHECK", false)
+}
+
 func LoadServerConfig() ConfigServer {
 	return ConfigServer{
 		ReadTimeout:  getenvDuration("SERVER_READ_TIMEOUT", 120*time.Second),

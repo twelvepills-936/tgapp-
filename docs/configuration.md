@@ -11,6 +11,7 @@ All settings are read from environment variables. Copy `.env` and adjust for you
 | `APP_GRPC_PORT` | `8091` | gRPC port |
 | `ENVIRONMENT` | `development` | Runtime environment (`development` / `production`) |
 | `LOG_LEVEL` | `info` | Log level (`debug` / `info` / `warn` / `error`) |
+| `SKIP_AI_WALLET_CHECK` | `false` | When `true`, AI text/image generation does not check or deduct Cybercoins |
 
 ## HTTP Server Timeouts
 

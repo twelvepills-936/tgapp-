@@ -41,6 +41,7 @@ make db.migrate
 | `DATABASE_URL` | From Railway Postgres |
 | `ENVIRONMENT` | `production` |
 | `CORS_ALLOWED_ORIGINS` | `*` (рекомендуется для Telegram Mini App) или точный URL фронта, напр. `https://tgappfront-production.up.railway.app` |
+| `SKIP_AI_WALLET_CHECK` | `true` — временно не списывать Cybercoins за AI (для тестов) |
 
 Если в Mini App при генерации видите **Load failed** — чаще всего CORS (нет заголовков) или неверный `VITE_API_BASE_URL` на фронте. Поставьте `CORS_ALLOWED_ORIGINS=*`, redeploy бэкенд.
 

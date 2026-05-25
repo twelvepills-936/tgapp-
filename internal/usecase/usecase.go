@@ -9,6 +9,7 @@ import (
 // UseCaseOptions tunes use case behaviour.
 type UseCaseOptions struct {
 	SkipRegistrationCheck bool
+	SkipAIWalletCheck     bool
 }
 
 // useCase implements internal.UseCase.
@@ -17,6 +18,7 @@ type useCase struct {
 	modelRouter           generator.Generator
 	imageGenerator        generator.ImageGenerator
 	skipRegistrationCheck bool
+	skipAIWalletCheck     bool
 }
 
 // NewUseCase wires repository layer into business logic.
@@ -29,5 +31,6 @@ func NewUseCase(repo internal.Repository, modelRouter generator.Generator, image
 		modelRouter:           modelRouter,
 		imageGenerator:        imageGenerator,
 		skipRegistrationCheck: opts.SkipRegistrationCheck,
+		skipAIWalletCheck:     opts.SkipAIWalletCheck,
 	}
 }

@@ -107,6 +107,7 @@ func main() {
 	imageGen := generator.NewImageRouter(addConfig.Yandex, addConfig.Gemini)
 	uc := usecase.NewUseCase(repo, modelRouter, imageGen, usecase.UseCaseOptions{
 		SkipRegistrationCheck: config.SkipRegistrationCheck(),
+		SkipAIWalletCheck:     config.SkipAIWalletCheck(),
 	})
 	svc := service.NewService(uc)
 
